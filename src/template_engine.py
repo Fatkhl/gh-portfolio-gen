@@ -76,6 +76,10 @@ class TemplateEngine:
         html = html.replace("{{ACTIVITY}}", self._activity(contrib.get("recent_activity", [])))
         html = html.replace("{{CONTRIB_GRAPH}}", self._contrib_graph(contrib))
         html = html.replace("{{HEX_SKILLS}}", self._hex_skills(langs))
+        html = html.replace("{{GITHUB_STATS}}", self._github_stats(user))
+        html = html.replace("{{ABOUT_HTML}}", self._about_section(p, langs, total_stars, repos_count))
+        html = html.replace("{{CONTACT_HTML}}", self._contact_section(gh_url, blog, tw))
+        html = html.replace("{{PROJECT_SHOWCASE}}", self._project_showcase(repos[:6]))
         html = html.replace("{{GENERATED_AT}}", generated_at)
         return html
 
@@ -158,6 +162,109 @@ class TemplateEngine:
             )
         return '<div class="hex-grid">' + "".join(items) + '</div>'
 
+    def _github_stats(self, username):
+        """GitHub stats cards using github-readme-stats."""
+        return '''<div class="stats-cards">
+            <img src="https://github-readme-stats.vercel.app/api?username=''' + username + '''&show_icons=true&theme=dark&bg_color=000000&title_color=00ff41&icon_color=00e5ff&text_color=b0b0b0&border_color=1a1a1a&hide_border=false" alt="GitHub Stats" class="stats-img" loading="lazy">
+            <img src="https://github-readme-stats.vercel.app/api/top-langs/?username=''' + username + '''&layout=compact&theme=dark&bg_color=000000&title_color=00ff41&text_color=b0b0b0&border_color=1a1a1a&hide_border=false" alt="Top Languages" class="stats-img" loading="lazy">
+        </div>'''
+
+    def _about_section(self, profile, langs, total_stars, repos_count):
+        """About me section with more detail."""
+        name = profile.get("name") or profile.get("username", "")
+        bio = profile.get("bio") or "Developer"
+        top_langs = [l["name"] for l in langs[:5]] if langs else []
+        lang_str = ", ".join(top_langs) if top_langs else "various languages"
+        
+        return '''<div class="about-grid">
+            <div class="about-text">
+                <p class="about-line">I'm a <span class="hl">Web3 Developer</span> and <span class="hl">AI Engineer</span> building the future of blockchain automation and intelligent tools.</p>
+                <p class="about-line">With <span class="hl">''' + str(repos_count) + ''' repositories</span> and <span class="hl">''' + str(total_stars) + ''' stars</span> on GitHub, I specialize in ''' + lang_str + '''.</p>
+                <p class="about-line">I'm passionate about <span class="hl">decentralized systems</span>, <span class="hl">smart contracts</span>, and <span class="hl">autonomous agents</span> that push the boundaries of what's possible.</p>
+                <p class="about-line dim">Currently exploring: DePIN infrastructure, on-chain AI, and zero-knowledge proofs.</p>
+            </div>
+            <div class="about-highlights">
+                <div class="highlight-card">
+                    <span class="hl-icon">\u26A1</span>
+                    <span class="hl-title">Blockchain</span>
+                    <span class="hl-desc">Solidity, EVM, Solana, TON</span>
+                </div>
+                <div class="highlight-card">
+                    <span class="hl-icon">\U0001F916</span>
+                    <span class="hl-title">AI / ML</span>
+                    <span class="hl-desc">Python, PyTorch, LLMs, Agents</span>
+                </div>
+                <div class="highlight-card">
+                    <span class="hl-icon">\U0001F4BB</span>
+                    <span class="hl-title">Full Stack</span>
+                    <span class="hl-desc">React, Node.js, Rust, Go</span>
+                </div>
+                <div class="highlight-card">
+                    <span class="hl-icon">\U0001F680</span>
+                    <span class="hl-title">DevOps</span>
+                    <span class="hl-desc">Docker, K8s, CI/CD, AWS</span>
+                </div>
+            </div>
+        </div>'''
+
+    def _contact_section(self, gh_url, blog, tw):
+        """Terminal-style contact section."""
+        links = '<a href="' + gh_url + '" target="_blank" class="btn">github</a>'
+        if blog:
+            links += '<a href="' + blog + '" target="_blank" class="btn">website</a>'
+        if tw:
+            links += '<a href="https://twitter.com/' + tw + '" target="_blank" class="btn">twitter</a>'
+        
+        return '''<div class="contact-terminal">
+            <div class="ct-bar"><span class="ct-dot r"></span><span class="ct-dot y"></span><span class="ct-dot g"></span><span class="ct-title">contact.sh</span></div>
+            <div class="ct-body">
+                <p class="ct-line"><span class="ct-p">visitor@portfolio:~$</span> <span class="ct-c">cat contact.txt</span></p>
+                <br>
+                <p class="ct-line ok">Open for opportunities:</p>
+                <p class="ct-line dim">- Freelance projects</p>
+                <p class="ct-line dim">- Full-time positions</p>
+                <p class="ct-line dim">- Collaboration & open source</p>
+                <br>
+                <p class="ct-line"><span class="ct-p">visitor@portfolio:~$</span> <span class="ct-c">ls ./channels/</span></p>
+                <br>
+                <div class="ct-links">''' + links + '''</div>
+                <br>
+                <p class="ct-line dim">// feel free to reach out on any platform</p>
+            </div>
+        </div>'''
+
+    def _project_showcase(self, repos):
+        """Enhanced project showcase with descriptions."""
+        if not repos: return ""
+        items = []
+        for i, r in enumerate(repos[:6]):
+            desc = r.get("description") or "No description"
+            lang = r.get("language") or ""
+            stars = r.get("stars", 0)
+            url = r.get("url", "")
+            homepage = r.get("homepage") or ""
+            
+            demo_btn = ""
+            if homepage:
+                demo_btn = '<a href="' + homepage + '" target="_blank" class="btn sm">live demo</a>'
+            
+            items.append('''<div class="showcase-item">
+                <div class="showcase-header">
+                    <span class="showcase-num">0''' + str(i+1) + '''</span>
+                    <span class="showcase-name">''' + r["name"] + '''</span>
+                    <span class="showcase-stars">''' + ('&#9733; ' + str(stars) if stars else '') + '''</span>
+                </div>
+                <p class="showcase-desc">''' + desc + '''</p>
+                <div class="showcase-footer">
+                    <span class="showcase-lang">''' + lang + '''</span>
+                    <div class="showcase-btns">
+                        <a href="''' + url + '''" target="_blank" class="btn sm">source</a>
+                        ''' + demo_btn + '''
+                    </div>
+                </div>
+            </div>''')
+        return "\n".join(items)
+
 
 _TEMPLATE = '''<!DOCTYPE html>
 <html lang="en">
@@ -205,6 +312,8 @@ _TEMPLATE = '''<!DOCTYPE html>
         <li><a href="#contrib">contributions</a></li>
         <li><a href="#projects">projects</a></li>
         <li><a href="#activity">activity</a></li>
+        <li><a href="#showcase">showcase</a></li>
+        <li><a href="#contact">contact</a></li>
     </ul>
 </nav>
 
@@ -244,6 +353,15 @@ _TEMPLATE = '''<!DOCTYPE html>
 </div>
 </section>
 
+<!-- ABOUT -->
+<section class="section" id="about-detail">
+<div class="container">
+    <div class="sec-hdr"><h2 class="sec-title">about me</h2><div class="sec-line"></div></div>
+    <p class="sec-sub">// who I am and what I do</p>
+    {{ABOUT_HTML}}
+</div>
+</section>
+
 <!-- CONTRIBUTIONS -->
 <section class="section" id="contrib">
 <div class="container">
@@ -259,6 +377,33 @@ _TEMPLATE = '''<!DOCTYPE html>
     <div class="sec-hdr"><h2 class="sec-title">projects</h2><div class="sec-line"></div></div>
     <p class="sec-sub">// top repositories by stars</p>
     <div class="repo-grid">{{REPO_HTML}}</div>
+</div>
+</section>
+
+<!-- SHOWCASE -->
+<section class="section" id="showcase">
+<div class="container">
+    <div class="sec-hdr"><h2 class="sec-title">showcase</h2><div class="sec-line"></div></div>
+    <p class="sec-sub">// featured projects in detail</p>
+    <div class="showcase-grid">{{PROJECT_SHOWCASE}}</div>
+</div>
+</section>
+
+<!-- GITHUB STATS -->
+<section class="section" id="stats">
+<div class="container">
+    <div class="sec-hdr"><h2 class="sec-title">github stats</h2><div class="sec-line"></div></div>
+    <p class="sec-sub">// numbers don't lie</p>
+    {{GITHUB_STATS}}
+</div>
+</section>
+
+<!-- CONTACT -->
+<section class="section" id="contact">
+<div class="container">
+    <div class="sec-hdr"><h2 class="sec-title">contact</h2><div class="sec-line"></div></div>
+    <p class="sec-sub">// let's build something together</p>
+    {{CONTACT_HTML}}
 </div>
 </section>
 
