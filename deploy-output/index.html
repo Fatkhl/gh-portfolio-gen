@@ -9,401 +9,45 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
-<style>
-:root {
-    --bg: #000000;
-    --bg2: #0a0a0a;
-    --card: #0d0d0d;
-    --card-hover: #111111;
-    --border: #1a1a1a;
-    --green: #00ff41;
-    --green2: #00cc33;
-    --green-dim: rgba(0,255,65,0.08);
-    --green-glow: 0 0 15px rgba(0,255,65,0.18), 0 0 30px rgba(0,255,65,0.06);
-    --cyan: #00e5ff;
-    --amber: #ffab00;
-    --red: #ff1744;
-    --text: #b0b0b0;
-    --text-bright: #e0e0e0;
-    --text-dim: #555;
-    --mono: 'JetBrains Mono', monospace;
-    --sans: 'Inter', sans-serif;
-}
-
-*,*::before,*::after { margin:0; padding:0; box-sizing:border-box; }
-html { scroll-behavior:smooth; }
-
-body {
-    font-family: var(--mono);
-    background: var(--bg);
-    color: var(--text);
-    line-height: 1.7;
-    overflow-x: hidden;
-    min-height: 100vh;
-}
-
-/* ═══ MATRIX RAIN ═══ */
-#matrix {
-    position: fixed;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    z-index: 0;
-    pointer-events: none;
-}
-
-/* ═══ RUNNING TERMINAL ═══ */
-#running-terminal {
-    position: fixed;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    z-index: 1;
-    pointer-events: none;
-    overflow: hidden;
-}
-
-.tline {
-    position: absolute;
-    font-family: var(--mono);
-    font-size: 11px;
-    line-height: 1.5;
-    white-space: nowrap;
-    opacity: 0;
-    animation: tFloat linear forwards;
-    pointer-events: none;
-}
-.tline .p { color: var(--cyan); }
-.tline .c { color: var(--green); text-shadow: 0 0 6px rgba(0,255,65,0.3); }
-.tline .o { color: #2a7a2a; }
-.tline .ok { color: var(--green); font-weight: 600; }
-
-@keyframes tFloat {
-    0% { opacity: 0; transform: translateY(30px); }
-    8% { opacity: 0.55; }
-    92% { opacity: 0.55; }
-    100% { opacity: 0; transform: translateY(-30px); }
-}
-
-/* ═══ SCANLINES ═══ */
-body::after {
-    content: '';
-    position: fixed;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    background: repeating-linear-gradient(
-        0deg, transparent, transparent 2px,
-        rgba(0,255,65,0.012) 2px, rgba(0,255,65,0.012) 4px
-    );
-    pointer-events: none;
-    z-index: 998;
-}
-
-/* ═══ CRT VIGNETTE ═══ */
-body::before {
-    content: '';
-    position: fixed;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    background: radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.7) 100%);
-    pointer-events: none;
-    z-index: 997;
-}
-
-/* ═══ CONTENT ═══ */
-.content { position: relative; z-index: 10; }
-.container { max-width: 1000px; margin: 0 auto; padding: 0 24px; }
-
-/* ═══ NAV ═══ */
-nav {
-    position: fixed;
-    top: 0; left: 0; right: 0;
-    z-index: 100;
-    padding: 14px 32px;
-    background: rgba(0,0,0,0.88);
-    backdrop-filter: blur(16px);
-    border-bottom: 1px solid rgba(0,255,65,0.08);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-.nav-logo {
-    font-family: var(--mono);
-    font-size: 0.85rem;
-    color: var(--green);
-    text-decoration: none;
-    font-weight: 700;
-    text-shadow: 0 0 10px rgba(0,255,65,0.3);
-}
-.nav-logo::before { content: '> '; color: var(--cyan); }
-.nav-links { display:flex; gap:28px; list-style:none; }
-.nav-links a {
-    color: var(--text-dim);
-    text-decoration: none;
-    font-size: 0.72rem;
-    text-transform: uppercase;
-    letter-spacing: 0.15em;
-    transition: all 0.3s;
-    position: relative;
-}
-.nav-links a::after {
-    content: '';
-    position: absolute;
-    bottom: -4px; left: 0;
-    width: 0; height: 1px;
-    background: var(--green);
-    box-shadow: 0 0 6px var(--green);
-    transition: width 0.3s;
-}
-.nav-links a:hover { color: var(--green); }
-.nav-links a:hover::after { width: 100%; }
-
-/* ═══ HERO 3D ═══ */
-.hero {
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    padding: 120px 0 80px;
-    perspective: 1200px;
-}
-.hero-inner {
-    display: grid;
-    grid-template-columns: 200px 1fr;
-    gap: 56px;
-    align-items: center;
-    transform-style: preserve-3d;
-}
-
-/* 3D Avatar */
-.avatar-3d {
-    width: 200px; height: 200px;
-    position: relative;
-    transform-style: preserve-3d;
-    transition: transform 0.15s ease-out;
-}
-.avatar-3d::before {
-    content: '';
-    position: absolute;
-    inset: -6px;
-    border: 2px solid var(--green);
-    border-radius: 8px;
-    transform: translateZ(-20px);
-    animation: pulse3d 3s ease-in-out infinite;
-}
-.avatar-3d::after {
-    content: '';
-    position: absolute;
-    inset: -14px;
-    border: 1px solid rgba(0,255,65,0.12);
-    border-radius: 12px;
-    transform: translateZ(-40px);
-    animation: pulse3d 3s ease-in-out infinite 0.5s;
-}
-@keyframes pulse3d {
-    0%,100% { opacity:0.6; box-shadow: var(--green-glow); }
-    50% { opacity:0.2; box-shadow: none; }
-}
-.avatar-img {
-    width: 200px; height: 200px;
-    border-radius: 8px;
-    object-fit: cover;
-    filter: grayscale(15%) contrast(1.1) brightness(0.95);
-    transition: all 0.5s;
-    box-shadow: 0 20px 60px rgba(0,255,65,0.08);
-}
-.avatar-img:hover {
-    filter: grayscale(0%) contrast(1.05) brightness(1);
-    box-shadow: 0 30px 80px rgba(0,255,65,0.15);
-}
-
-/* Hero Text */
-.hero-text { transform-style: preserve-3d; }
-.term-line { font-size:0.75rem; color:var(--text-dim); margin-bottom:6px; }
-.term-line::before { content:'$ '; color:var(--green); }
-.hero-name {
-    font-family: var(--mono);
-    font-size: 3.2rem;
-    font-weight: 700;
-    color: var(--text-bright);
-    margin-bottom: 4px;
-    position: relative;
-    display: inline-block;
-    text-shadow: 0 0 30px rgba(0,255,65,0.12);
-    transform-style: preserve-3d;
-    animation: nameFloat 6s ease-in-out infinite;
-}
-@keyframes nameFloat {
-    0%,100% { transform: translateZ(0); }
-    50% { transform: translateZ(20px); }
-}
-
-/* Glitch */
-.hero-name::before, .hero-name::after {
-    content: attr(data-text);
-    position: absolute;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    pointer-events: none;
-}
-.hero-name::before { color: var(--cyan); z-index: -1; animation: g1 4s infinite; }
-.hero-name::after { color: var(--red); z-index: -2; animation: g2 4s infinite; }
-
-@keyframes g1 {
-    0%,88%,100% { clip-path:inset(0); transform:translate(0); }
-    90% { clip-path:inset(20% 0 60% 0); transform:translate(-4px,2px); }
-    92% { clip-path:inset(50% 0 20% 0); transform:translate(4px,-1px); }
-    94% { clip-path:inset(10% 0 70% 0); transform:translate(-2px,3px); }
-    96% { clip-path:inset(80% 0 5% 0); transform:translate(3px,-2px); }
-}
-@keyframes g2 {
-    0%,88%,100% { clip-path:inset(0); transform:translate(0); }
-    89% { clip-path:inset(60% 0 10% 0); transform:translate(3px,2px); }
-    91% { clip-path:inset(30% 0 40% 0); transform:translate(-3px,-1px); }
-    93% { clip-path:inset(70% 0 15% 0); transform:translate(2px,1px); }
-    95% { clip-path:inset(5% 0 80% 0); transform:translate(-1px,-3px); }
-}
-
-.handle { font-size:1rem; color:var(--green); margin-bottom:20px; text-shadow:0 0 10px rgba(0,255,65,0.3); }
-.cursor { animation: blink 1s step-end infinite; }
-@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
-
-.hero-bio { font-family:var(--sans); font-size:0.95rem; color:var(--text); margin-bottom:16px; max-width:500px; line-height:1.8; }
-.hero-info { font-size:0.78rem; color:var(--text-dim); margin-bottom:24px; }
-
-.btn-row { display:flex; gap:12px; flex-wrap:wrap; margin-bottom:32px; }
-.btn {
-    font-family:var(--mono); font-size:0.78rem; color:var(--text-dim);
-    text-decoration:none; padding:8px 18px; border:1px solid var(--border);
-    border-radius:2px; transition:all 0.3s; text-transform:lowercase;
-    position:relative; overflow:hidden;
-}
-.btn::before {
-    content:''; position:absolute; top:0; left:-100%;
-    width:100%; height:100%;
-    background:linear-gradient(90deg, transparent, rgba(0,255,65,0.06), transparent);
-    transition:left 0.5s;
-}
-.btn:hover { color:var(--green); border-color:var(--green); box-shadow:var(--green-glow); transform:translateY(-2px); }
-.btn:hover::before { left:100%; }
-
-.stats { display:flex; gap:36px; }
-.stat-v { font-size:1.8rem; font-weight:700; color:var(--green); line-height:1; text-shadow:0 0 15px rgba(0,255,65,0.2); }
-.stat-l { font-size:0.6rem; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.15em; margin-top:4px; }
-
-/* ═══ SECTIONS ═══ */
-.section { padding:80px 0; border-top:1px solid #0a0a0a; }
-.sec-hdr { display:flex; align-items:center; gap:12px; margin-bottom:8px; }
-.sec-title { font-family:var(--mono); font-size:1rem; font-weight:600; color:var(--green); text-transform:uppercase; letter-spacing:0.12em; text-shadow:0 0 10px rgba(0,255,65,0.12); }
-.sec-title::before { content:'# '; color:var(--text-dim); }
-.sec-line { flex:1; height:1px; background:linear-gradient(90deg,#1a1a1a,transparent); }
-.sec-sub { font-size:0.82rem; color:var(--text-dim); margin-bottom:36px; font-family:var(--sans); }
-
-/* ═══ LANG BAR ═══ */
-.lang-bar { display:flex; height:6px; border-radius:3px; overflow:hidden; margin-bottom:20px; border:1px solid #111; }
-.lang-seg { height:100%; transition:all 0.3s; }
-.lang-seg:hover { filter:brightness(1.4); box-shadow:0 0 12px currentColor; }
-.lang-grid { display:flex; flex-wrap:wrap; gap:18px; }
-.lang-i { display:flex; align-items:center; gap:8px; font-size:0.78rem; }
-.lang-dot { width:8px; height:8px; border-radius:2px; flex-shrink:0; }
-.lang-n { color:var(--text); }
-.lang-p { color:var(--text-dim); font-size:0.68rem; }
-
-/* ═══ 3D REPO CARDS ═══ */
-.repo-grid {
-    display:grid;
-    grid-template-columns:repeat(auto-fill, minmax(300px, 1fr));
-    gap:18px;
-    perspective:1200px;
-}
-.repo-card {
-    background:var(--card); border:1px solid var(--border); border-radius:6px;
-    padding:22px; text-decoration:none; color:inherit;
-    display:flex; flex-direction:column;
-    transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
-    transform-style:preserve-3d;
-    position:relative; overflow:hidden; cursor:pointer;
-}
-.repo-card::before {
-    content:''; position:absolute; top:0; left:0;
-    width:3px; height:0; background:var(--green);
-    transition:height 0.4s; box-shadow:0 0 10px var(--green);
-}
-.repo-card::after {
-    content:''; position:absolute; inset:0;
-    background:radial-gradient(circle at var(--mx,50%) var(--my,50%), rgba(0,255,65,0.04) 0%, transparent 60%);
-    opacity:0; transition:opacity 0.3s; pointer-events:none;
-}
-.repo-card:hover {
-    border-color:rgba(0,255,65,0.25); background:var(--card-hover);
-    box-shadow: 0 10px 40px rgba(0,255,65,0.06), 0 0 0 1px rgba(0,255,65,0.08), inset 0 1px 0 rgba(0,255,65,0.03);
-}
-.repo-card:hover::before { height:100%; }
-.repo-card:hover::after { opacity:1; }
-.repo-card.tilted { transform:rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg)) translateZ(10px); }
-
-.repo-name-row { display:flex; align-items:center; gap:8px; margin-bottom:10px; }
-.repo-icon { color:var(--amber); font-size:0.85rem; }
-.repo-name { font-family:var(--mono); font-size:0.92rem; font-weight:600; color:var(--cyan); }
-.repo-desc { font-family:var(--sans); font-size:0.8rem; color:var(--text-dim); margin-bottom:14px; flex:1; line-height:1.6; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; }
-.repo-topics { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px; }
-.topic { padding:2px 8px; background:var(--green-dim); color:var(--green); border-radius:2px; font-size:0.62rem; font-weight:500; }
-.repo-meta { display:flex; gap:14px; font-size:0.72rem; color:var(--text-dim); }
-.meta-i { display:flex; align-items:center; gap:4px; }
-.lang-ind { width:6px; height:6px; border-radius:50%; display:inline-block; }
-
-/* ═══ ACTIVITY ═══ */
-.activity-list { display:flex; flex-direction:column; gap:8px; }
-.act-row { display:flex; align-items:center; gap:14px; padding:12px 16px; background:var(--card); border:1px solid var(--border); border-radius:4px; transition:all 0.3s; font-size:0.8rem; }
-.act-row:hover { border-color:rgba(0,255,65,0.2); }
-.act-icon { width:28px; height:28px; display:flex; align-items:center; justify-content:center; font-size:0.85rem; background:var(--green-dim); border-radius:4px; flex-shrink:0; }
-.act-type { font-weight:600; color:var(--text); min-width:90px; }
-.act-repo { color:var(--cyan); flex:1; font-size:0.76rem; }
-.act-date { color:var(--text-dim); font-size:0.7rem; }
-
-/* ═══ FOOTER ═══ */
-.footer { padding:40px 0; border-top:1px solid #0a0a0a; text-align:center; }
-.footer-t { font-size:0.7rem; color:var(--text-dim); }
-.footer-t a { color:var(--green); text-decoration:none; }
-.footer-t a:hover { text-decoration:underline; }
-
-/* ═══ SCROLL REVEAL ═══ */
-.reveal { opacity:0; transform:translateY(30px) translateZ(-20px); transition:all 0.8s cubic-bezier(0.23,1,0.32,1); }
-.reveal.visible { opacity:1; transform:translateY(0) translateZ(0); }
-
-/* ═══ RESPONSIVE ═══ */
-@media (max-width:768px) {
-    .hero { padding:100px 0 60px; }
-    .hero-inner { grid-template-columns:1fr; text-align:center; gap:32px; }
-    .avatar-3d { width:140px; height:140px; margin:0 auto; }
-    .avatar-img { width:140px; height:140px; }
-    .hero-name { font-size:2rem; }
-    .btn-row { justify-content:center; }
-    .stats { justify-content:center; }
-    .repo-grid { grid-template-columns:1fr; }
-    .nav-links { display:none; }
-}
-
-::selection { background:var(--green); color:#000; }
-::-webkit-scrollbar { width:5px; }
-::-webkit-scrollbar-track { background:#000; }
-::-webkit-scrollbar-thumb { background:#1a1a1a; border-radius:3px; }
-::-webkit-scrollbar-thumb:hover { background:var(--green); }
-</style>
+<link rel="stylesheet" href="static/css/style.css">
 </head>
 <body>
 
-<canvas id="matrix"></canvas>
-<div id="running-terminal"></div>
+<!-- ═══ BOOT SCREEN ═══ -->
+<div id="boot">
+    <div id="boot-box">
+        <div id="boot-text"></div>
+        <div id="boot-bar"><div id="boot-bar-fill"></div></div>
+        <button id="boot-skip">[ skip ]</button>
+    </div>
+</div>
 
+<!-- ═══ EASTER EGG OVERLAY ═══ -->
+<div id="matrix-mode">
+    <h1>YOU FOUND THE MATRIX</h1>
+    <p>> There is no spoon... only code.</p>
+    <p style="margin-top:8px;font-size:0.8rem;opacity:0.5">// konami code activated</p>
+</div>
+
+<!-- ═══ BG LAYERS ═══ -->
+<canvas id="matrix"></canvas>
+<div id="rterm"></div>
+
+<!-- ═══ CONTENT ═══ -->
 <div class="content">
+
 <nav>
     <a href="#" class="nav-logo">Fatkhl</a>
     <ul class="nav-links">
         <li><a href="#about">about</a></li>
         <li><a href="#stack">stack</a></li>
+        <li><a href="#contrib">contributions</a></li>
         <li><a href="#projects">projects</a></li>
         <li><a href="#activity">activity</a></li>
     </ul>
 </nav>
 
+<!-- HERO -->
 <section class="hero" id="about">
 <div class="container">
     <div class="hero-inner">
@@ -412,9 +56,9 @@ nav {
         </div>
         <div class="hero-text">
             <p class="term-line">whoami</p>
-            <h1 class="hero-name" data-text="0xfatkhul">0xfatkhul</h1>
-            <p class="handle">@Fatkhl<span class="cursor">_</span></p>
-            <p class="hero-bio">airdrop is my live</p>
+            <h1 class="hero-name" data-text="0xfatkhul"></h1>
+            <p class="handle" data-handle="@Fatkhl"></p>
+            <p class="hero-bio" data-bio="airdrop is my live"></p>
             <p class="hero-info"></p>
             <div class="btn-row"><a href="https://github.com/Fatkhl" target="_blank" class="btn">github</a></div>
             <div class="stats">
@@ -428,6 +72,7 @@ nav {
 </div>
 </section>
 
+<!-- STACK -->
 <section class="section" id="stack">
 <div class="container">
     <div class="sec-hdr"><h2 class="sec-title">tech stack</h2><div class="sec-line"></div></div>
@@ -438,202 +83,83 @@ nav {
 <div class="lang-i"><span class="lang-dot" style="background:#3572A5;box-shadow:0 0 6px #3572A550"></span><span class="lang-n">Python</span><span class="lang-p">11.1%</span></div>
 <div class="lang-i"><span class="lang-dot" style="background:#89e051;box-shadow:0 0 6px #89e05150"></span><span class="lang-n">Shell</span><span class="lang-p">11.1%</span></div>
 <div class="lang-i"><span class="lang-dot" style="background:#3178c6;box-shadow:0 0 6px #3178c650"></span><span class="lang-n">TypeScript</span><span class="lang-p">11.1%</span></div></div>
+    <div class="hex-grid"><div class="hex-item"><div class="hex-shape" style="background:#e34c2625"><span class="hex-pct-inner">33%</span></div><span class="hex-name">HTML</span></div><div class="hex-item"><div class="hex-shape" style="background:#f1e05a25"><span class="hex-pct-inner">33%</span></div><span class="hex-name">JavaScript</span></div><div class="hex-item"><div class="hex-shape" style="background:#3572A525"><span class="hex-pct-inner">11%</span></div><span class="hex-name">Python</span></div><div class="hex-item"><div class="hex-shape" style="background:#89e05125"><span class="hex-pct-inner">11%</span></div><span class="hex-name">Shell</span></div><div class="hex-item"><div class="hex-shape" style="background:#3178c625"><span class="hex-pct-inner">11%</span></div><span class="hex-name">TypeScript</span></div></div>
 </div>
 </section>
 
+<!-- CONTRIBUTIONS -->
+<section class="section" id="contrib">
+<div class="container">
+    <div class="sec-hdr"><h2 class="sec-title">contributions</h2><div class="sec-line"></div></div>
+    <p class="sec-sub">// github activity graph</p>
+    <div class="contrib-wrap"><div class="contrib-graph"><div class="contrib-cell l4" title="contributions"></div><div class="contrib-cell l2" title="contributions"></div><div class="contrib-cell l1" title="contributions"></div><div class="contrib-cell l1" title="contributions"></div><div class="contrib-cell " title="contributions"></div><div class="contrib-cell l3" title="contributions"></div><div class="contrib-cell " title="contributions"></div><div class="contrib-cell " title="contributions"></div><div class="contrib-cell l4" title="contributions"></div><div class="contrib-cell " title="contributions"></div><div class="contrib-cell l4" title="contributions"></div><div class="contrib-cell l3" title="contributions"></div><div class="contrib-cell l1" title="contributions"></div><div class="contrib-cell l2" title="contributions"></div><div class="contrib-cell l1" title="contributions"></div><div class="contrib-cell " title="contributions"></div><div class="contrib-cell l4" title="contributions"></div><div class="contrib-cell l1" title="contributions"></div><div class="contrib-cell l1" title="contributions"></div><div class="contrib-cell " title="contributions"></div><div class="contrib-cell l2" title="contributions"></div><div class="contrib-cell l4" title="contributions"></div><div class="contrib-cell l4" title="contributions"></div><div class="contrib-cell l4" title="contributions"></div><div class="contrib-cell l4" title="contributions"></div><div class="contrib-cell l1" title="contributions"></div><div class="contrib-cell l3" title="contributions"></div><div class="contrib-cell l2" title="contributions"></div><div class="contrib-cell l1" title="contributions"></div><div class="contrib-cell l4" title="contributions"></div><div class="contrib-cell l3" title="contributions"></div><div class="contrib-cell l1" title="contributions"></div><div class="contrib-cell l3" title="contributions"></div><div class="contrib-cell l2" title="contributions"></div><div class="contrib-cell l4" title="contributions"></div><div class="contrib-cell l3" title="contributions"></div><div class="contrib-cell l4" title="contributions"></div><div class="contrib-cell l4" title="contributions"></div><div class="contrib-cell l3" title="contributions"></div><div class="contrib-cell l3" title="contributions"></div><div class="contrib-cell l2" title="contributions"></div><div class="contrib-cell " title="contributions"></div><div class="contrib-cell l2" title="contributions"></div><div class="contrib-cell l4" title="contributions"></div><div class="contrib-cell l1" title="contributions"></div><div class="contrib-cell l1" title="contributions"></div><div class="contrib-cell l2" title="contributions"></div><div class="contrib-cell l2" title="contributions"></div><div class="contrib-cell l3" title="contributions"></div><div class="contrib-cell " title="contributions"></div><div class="contrib-cell l1" title="contributions"></div><div class="contrib-cell l4" title="contributions"></div><div class="contrib-cell l2" title="contributions"></div><div class="contrib-cell l2" title="contributions"></div><div class="contrib-cell l3" title="contributions"></div><div class="contrib-cell l3" title="contributions"></div><div class="contrib-cell l4" title="contributions"></div><div class="contrib-cell l4" title="contributions"></div><div class="contrib-cell l4" title="contributions"></div><div class="contrib-cell l4" title="contributions"></div><div class="contrib-cell " title="contributions"></div><div class="contrib-cell l3" title="contributions"></div><div class="contrib-cell " title="contributions"></div><div class="contrib-cell l3" title="contributions"></div><div class="contrib-cell l1" title="contributions"></div><div class="contrib-cell " title="contributions"></div><div class="contrib-cell l2" title="contributions"></div><div class="contrib-cell l2" title="contributions"></div><div class="contrib-cell " title="contributions"></div><div class="contrib-cell " title="contributions"></div><div class="contrib-cell l4" title="contributions"></div><div class="contrib-cell l4" title="contributions"></div><div class="contrib-cell l3" title="contributions"></div><div class="contrib-cell l3" title="contributions"></div><div class="contrib-cell " title="contributions"></div><div class="contrib-cell " title="contributions"></div><div class="contrib-cell l2" title="contributions"></div><div class="contrib-cell l2" title="contributions"></div><div class="contrib-cell " title="contributions"></div><div class="contrib-cell l3" title="contributions"></div><div class="contrib-cell l4" title="contributions"></div><div class="contrib-cell l2" title="contributions"></div><div class="contrib-cell l4" title="contributions"></div><div class="contrib-cell l1" title="contributions"></div><div class="contrib-cell l3" title="contributions"></div><div class="contrib-cell " title="contributions"></div><div class="contrib-cell l3" title="contributions"></div><div class="contrib-cell l1" title="contributions"></div><div class="contrib-cell " title="contributions"></div><div class="contrib-cell l3" title="contributions"></div><div class="contrib-cell l2" title="contributions"></div><div class="contrib-cell l2" title="contributions"></div><div class="contrib-cell l4" title="contributions"></div><div class="contrib-cell l1" title="contributions"></div><div class="contrib-cell l1" title="contributions"></div><div class="contrib-cell l1" title="contributions"></div><div class="contrib-cell l3" title="contributions"></div><div class="contrib-cell l1" title="contributions"></div><div class="contrib-cell l3" title="contributions"></div><div class="contrib-cell l1" title="contributions"></div><div class="contrib-cell " title="contributions"></div><div class="contrib-cell l3" title="contributions"></div><div class="contrib-cell l2" title="contributions"></div><div class="contrib-cell l1" title="contributions"></div><div class="contrib-cell l3" title="contributions"></div><div class="contrib-cell l3" title="contributions"></div><div class="contrib-cell " title="contributions"></div><div class="contrib-cell " title="contributions"></div><div class="contrib-cell l2" title="contributions"></div><div class="contrib-cell " title="contributions"></div><div class="contrib-cell l3" title="contributions"></div><div class="contrib-cell l1" title="contributions"></div><div class="contrib-cell l4" title="contributions"></div><div class="contrib-cell l4" title="contributions"></div><div class="contrib-cell l2" title="contributions"></div><div class="contrib-cell l3" title="contributions"></div><div class="contrib-cell l4" title="contributions"></div><div class="contrib-cell l4" title="contributions"></div><div class="contrib-cell " title="contributions"></div><div class="contrib-cell l4" title="contributions"></div><div class="contrib-cell " title="contributions"></div><div class="contrib-cell " title="contributions"></div><div class="contrib-cell " title="contributions"></div><div class="contrib-cell l3" title="contributions"></div><div class="contrib-cell " title="contributions"></div><div class="contrib-cell l2" title="contributions"></div><div class="contrib-cell l1" title="contributions"></div><div class="contrib-cell l1" title="contributions"></div><div class="contrib-cell l3" title="contributions"></div><div class="contrib-cell l3" title="contributions"></div><div class="contrib-cell l1" title="contributions"></div><div class="contrib-cell " title="contributions"></div><div class="contrib-cell l1" title="contributions"></div><div class="contrib-cell l1" title="contributions"></div><div class="contrib-cell l3" title="contributions"></div><div class="contrib-cell l1" title="contributions"></div><div class="contrib-cell l1" title="contributions"></div><div class="contrib-cell l3" title="contributions"></div><div class="contrib-cell l3" title="contributions"></div><div class="contrib-cell l1" title="contributions"></div><div class="contrib-cell l3" title="contributions"></div><div class="contrib-cell l1" title="contributions"></div><div class="contrib-cell l1" title="contributions"></div><div class="contrib-cell l1" title="contributions"></div><div class="contrib-cell l2" title="contributions"></div><div class="contrib-cell l2" title="contributions"></div><div class="contrib-cell l1" title="contributions"></div><div class="contrib-cell l1" title="contributions"></div><div class="contrib-cell l3" title="contributions"></div><div class="contrib-cell l2" title="contributions"></div><div class="contrib-cell l3" title="contributions"></div><div class="contrib-cell l4" title="contributions"></div><div class="contrib-cell l3" title="contributions"></div><div class="contrib-cell l3" title="contributions"></div><div class="contrib-cell " title="contributions"></div><div class="contrib-cell l2" title="contributions"></div><div class="contrib-cell l3" title="contributions"></div><div class="contrib-cell " title="contributions"></div><div class="contrib-cell l2" title="contributions"></div><div class="contrib-cell l4" title="contributions"></div><div class="contrib-cell l3" title="contributions"></div><div class="contrib-cell l4" title="contributions"></div><div class="contrib-cell l4" title="contributions"></div><div class="contrib-cell l4" title="contributions"></div><div class="contrib-cell l4" title="contributions"></div><div class="contrib-cell l3" title="contributions"></div><div class="contrib-cell " title="contributions"></div><div class="contrib-cell l3" title="contributions"></div><div class="contrib-cell l1" title="contributions"></div><div class="contrib-cell l2" title="contributions"></div><div class="contrib-cell l2" title="contributions"></div><div class="contrib-cell l3" title="contributions"></div><div class="contrib-cell l2" title="contributions"></div><div class="contrib-cell l3" title="contributions"></div><div class="contrib-cell l1" title="contributions"></div><div class="contrib-cell " title="contributions"></div><div class="contrib-cell l3" title="contributions"></div><div class="contrib-cell l1" title="contributions"></div><div class="contrib-cell l3" title="contributions"></div><div class="contrib-cell l3" title="contributions"></div><div class="contrib-cell " title="contributions"></div><div class="contrib-cell l2" title="contributions"></div><div class="contrib-cell l1" title="contributions"></div><div class="contrib-cell " title="contributions"></div><div class="contrib-cell l2" title="contributions"></div><div class="contrib-cell l2" title="contributions"></div><div class="contrib-cell l3" title="contributions"></div><div class="contrib-cell l4" title="contributions"></div><div class="contrib-cell " title="contributions"></div><div class="contrib-cell l1" title="contributions"></div><div class="contrib-cell l3" title="contributions"></div><div class="contrib-cell " title="contributions"></div><div class="contrib-cell " title="contributions"></div><div class="contrib-cell " title="contributions"></div><div class="contrib-cell l2" title="contributions"></div><div class="contrib-cell l4" title="contributions"></div><div class="contrib-cell l3" title="contributions"></div><div class="contrib-cell l4" title="contributions"></div><div class="contrib-cell " title="contributions"></div><div class="contrib-cell " title="contributions"></div><div class="contrib-cell l3" title="contributions"></div><div class="contrib-cell l3" title="contributions"></div><div class="contrib-cell " title="contributions"></div><div class="contrib-cell l3" title="contributions"></div><div class="contrib-cell " title="contributions"></div><div class="contrib-cell l1" title="contributions"></div><div class="contrib-cell l2" title="contributions"></div><div class="contrib-cell l1" title="contributions"></div><div class="contrib-cell l3" title="contributions"></div><div class="contrib-cell l3" title="contributions"></div><div class="contrib-cell " title="contributions"></div><div class="contrib-cell l1" title="contributions"></div><div class="contrib-cell " title="contributions"></div><div class="contrib-cell " title="contributions"></div><div class="contrib-cell l4" title="contributions"></div><div class="contrib-cell " title="contributions"></div><div class="contrib-cell l4" title="contributions"></div><div class="contrib-cell l1" title="contributions"></div><div class="contrib-cell l3" title="contributions"></div><div class="contrib-cell l2" title="contributions"></div><div class="contrib-cell l3" title="contributions"></div><div class="contrib-cell l3" title="contributions"></div><div class="contrib-cell " title="contributions"></div><div class="contrib-cell l4" title="contributions"></div><div class="contrib-cell l2" title="contributions"></div><div class="contrib-cell l1" title="contributions"></div><div class="contrib-cell l4" title="contributions"></div><div class="contrib-cell l3" title="contributions"></div><div class="contrib-cell " title="contributions"></div><div class="contrib-cell l1" title="contributions"></div><div class="contrib-cell l1" title="contributions"></div><div class="contrib-cell l2" title="contributions"></div><div class="contrib-cell l1" title="contributions"></div><div class="contrib-cell l4" title="contributions"></div><div class="contrib-cell l4" title="contributions"></div><div class="contrib-cell l3" title="contributions"></div><div class="contrib-cell l4" title="contributions"></div><div class="contrib-cell l3" title="contributions"></div><div class="contrib-cell l3" title="contributions"></div><div class="contrib-cell " title="contributions"></div><div class="contrib-cell " title="contributions"></div><div class="contrib-cell l1" title="contributions"></div><div class="contrib-cell " title="contributions"></div><div class="contrib-cell l1" title="contributions"></div><div class="contrib-cell l2" title="contributions"></div><div class="contrib-cell l3" title="contributions"></div><div class="contrib-cell " title="contributions"></div><div class="contrib-cell l4" title="contributions"></div><div class="contrib-cell l3" title="contributions"></div><div class="contrib-cell " title="contributions"></div><div class="contrib-cell l4" title="contributions"></div><div class="contrib-cell l4" title="contributions"></div><div class="contrib-cell " title="contributions"></div><div class="contrib-cell l4" title="contributions"></div><div class="contrib-cell " title="contributions"></div><div class="contrib-cell l2" title="contributions"></div><div class="contrib-cell l3" title="contributions"></div><div class="contrib-cell l4" title="contributions"></div><div class="contrib-cell " title="contributions"></div><div class="contrib-cell " title="contributions"></div><div class="contrib-cell l3" title="contributions"></div><div class="contrib-cell " title="contributions"></div><div class="contrib-cell l4" title="contributions"></div><div class="contrib-cell l4" title="contributions"></div><div class="contrib-cell l1" title="contributions"></div><div class="contrib-cell " title="contributions"></div><div class="contrib-cell l1" title="contributions"></div><div class="contrib-cell l3" title="contributions"></div><div class="contrib-cell l2" title="contributions"></div><div class="contrib-cell l3" title="contributions"></div><div class="contrib-cell l1" title="contributions"></div><div class="contrib-cell " title="contributions"></div><div class="contrib-cell l1" title="contributions"></div><div class="contrib-cell l4" title="contributions"></div><div class="contrib-cell l4" title="contributions"></div><div class="contrib-cell l1" title="contributions"></div><div class="contrib-cell l4" title="contributions"></div><div class="contrib-cell l3" title="contributions"></div><div class="contrib-cell l3" title="contributions"></div><div class="contrib-cell l4" title="contributions"></div><div class="contrib-cell l1" title="contributions"></div><div class="contrib-cell " title="contributions"></div><div class="contrib-cell " title="contributions"></div><div class="contrib-cell l4" title="contributions"></div><div class="contrib-cell l3" title="contributions"></div><div class="contrib-cell l4" title="contributions"></div><div class="contrib-cell l3" title="contributions"></div><div class="contrib-cell l3" title="contributions"></div><div class="contrib-cell l4" title="contributions"></div><div class="contrib-cell l3" title="contributions"></div><div class="contrib-cell l3" title="contributions"></div><div class="contrib-cell " title="contributions"></div><div class="contrib-cell l2" title="contributions"></div><div class="contrib-cell " title="contributions"></div><div class="contrib-cell " title="contributions"></div><div class="contrib-cell " title="contributions"></div><div class="contrib-cell " title="contributions"></div><div class="contrib-cell l4" title="contributions"></div><div class="contrib-cell l4" title="contributions"></div><div class="contrib-cell l3" title="contributions"></div><div class="contrib-cell l3" title="contributions"></div><div class="contrib-cell " title="contributions"></div><div class="contrib-cell l1" title="contributions"></div><div class="contrib-cell l3" title="contributions"></div><div class="contrib-cell l3" title="contributions"></div><div class="contrib-cell l3" title="contributions"></div><div class="contrib-cell l4" title="contributions"></div><div class="contrib-cell l3" title="contributions"></div><div class="contrib-cell l4" title="contributions"></div><div class="contrib-cell " title="contributions"></div><div class="contrib-cell l3" title="contributions"></div><div class="contrib-cell l4" title="contributions"></div><div class="contrib-cell l1" title="contributions"></div><div class="contrib-cell l3" title="contributions"></div><div class="contrib-cell l3" title="contributions"></div><div class="contrib-cell l4" title="contributions"></div><div class="contrib-cell l3" title="contributions"></div><div class="contrib-cell l4" title="contributions"></div><div class="contrib-cell l1" title="contributions"></div><div class="contrib-cell l4" title="contributions"></div><div class="contrib-cell l3" title="contributions"></div><div class="contrib-cell l4" title="contributions"></div><div class="contrib-cell l1" title="contributions"></div><div class="contrib-cell l2" title="contributions"></div><div class="contrib-cell l4" title="contributions"></div><div class="contrib-cell " title="contributions"></div><div class="contrib-cell l2" title="contributions"></div><div class="contrib-cell " title="contributions"></div><div class="contrib-cell l4" title="contributions"></div><div class="contrib-cell l4" title="contributions"></div><div class="contrib-cell l3" title="contributions"></div><div class="contrib-cell " title="contributions"></div><div class="contrib-cell l1" title="contributions"></div><div class="contrib-cell l3" title="contributions"></div><div class="contrib-cell l1" title="contributions"></div><div class="contrib-cell l3" title="contributions"></div><div class="contrib-cell l2" title="contributions"></div><div class="contrib-cell l2" title="contributions"></div><div class="contrib-cell " title="contributions"></div><div class="contrib-cell l4" title="contributions"></div><div class="contrib-cell " title="contributions"></div><div class="contrib-cell l2" title="contributions"></div><div class="contrib-cell l3" title="contributions"></div><div class="contrib-cell " title="contributions"></div><div class="contrib-cell l3" title="contributions"></div><div class="contrib-cell l3" title="contributions"></div><div class="contrib-cell l1" title="contributions"></div><div class="contrib-cell l2" title="contributions"></div><div class="contrib-cell l4" title="contributions"></div><div class="contrib-cell l2" title="contributions"></div><div class="contrib-cell " title="contributions"></div><div class="contrib-cell l2" title="contributions"></div><div class="contrib-cell l4" title="contributions"></div><div class="contrib-cell l2" title="contributions"></div><div class="contrib-cell l2" title="contributions"></div><div class="contrib-cell l2" title="contributions"></div><div class="contrib-cell l3" title="contributions"></div><div class="contrib-cell l3" title="contributions"></div><div class="contrib-cell l4" title="contributions"></div><div class="contrib-cell l4" title="contributions"></div><div class="contrib-cell l4" title="contributions"></div><div class="contrib-cell " title="contributions"></div><div class="contrib-cell l3" title="contributions"></div><div class="contrib-cell " title="contributions"></div></div><div class="contrib-legend">Less <div class="contrib-cell"></div><div class="contrib-cell l1"></div><div class="contrib-cell l2"></div><div class="contrib-cell l3"></div><div class="contrib-cell l4"></div> More</div></div>
+</div>
+</section>
+
+<!-- PROJECTS -->
 <section class="section" id="projects">
 <div class="container">
     <div class="sec-hdr"><h2 class="sec-title">projects</h2><div class="sec-line"></div></div>
     <p class="sec-sub">// top repositories by stars</p>
-    <div class="repo-grid"><a href="https://github.com/Fatkhl/Huddle01-Auto-Bot" target="_blank" class="repo-card"><div class="repo-name-row"><span class="repo-icon">◆</span><span class="repo-name">Huddle01-Auto-Bot</span></div><p class="repo-desc">A Node.js bot for automatically joining Huddle01 test network rooms to collect testnet participation points</p><div class="repo-meta"><span class="meta-i"><span class="lang-ind" style="background:#f1e05a;box-shadow:0 0 6px #f1e05a"></span>JavaScript</span><span class="meta-i">★ 1</span></div></a>
-<a href="https://github.com/Fatkhl/gh-portfolio-gen" target="_blank" class="repo-card"><div class="repo-name-row"><span class="repo-icon">◆</span><span class="repo-name">gh-portfolio-gen</span></div><p class="repo-desc">🚀 Auto-generate developer portfolio from GitHub data — one command, zero dependencies</p><div class="repo-meta"><span class="meta-i"><span class="lang-ind" style="background:#3572A5;box-shadow:0 0 6px #3572A5"></span>Python</span></div></a>
-<a href="https://github.com/Fatkhl/portfolio" target="_blank" class="repo-card"><div class="repo-name-row"><span class="repo-icon">◆</span><span class="repo-name">portfolio</span></div><p class="repo-desc">Web3 Developer Portfolio — Blockchain × AI Automation</p><div class="repo-meta"><span class="meta-i"><span class="lang-ind" style="background:#e34c26;box-shadow:0 0 6px #e34c26"></span>HTML</span></div></a>
-<a href="https://github.com/Fatkhl/hermes-agent-guide" target="_blank" class="repo-card"><div class="repo-name-row"><span class="repo-icon">◆</span><span class="repo-name">hermes-agent-guide</span></div><p class="repo-desc">Hermes AI Agent Setup Guide - Install, Configure, Make Agent Smart and Obedient</p><div class="repo-meta"><span class="meta-i"><span class="lang-ind" style="background:#89e051;box-shadow:0 0 6px #89e051"></span>Shell</span></div></a>
-<a href="https://github.com/Fatkhl/rialhq-wallet" target="_blank" class="repo-card"><div class="repo-name-row"><span class="repo-icon">◆</span><span class="repo-name">rialhq-wallet</span></div><p class="repo-desc">RialHQ - EVM Multi-Chain Wallet Extension for Rialo Ecosystem</p><div class="repo-meta"><span class="meta-i"><span class="lang-ind" style="background:#f1e05a;box-shadow:0 0 6px #f1e05a"></span>JavaScript</span></div></a>
-<a href="https://github.com/Fatkhl/dejavu-tools-card" target="_blank" class="repo-card"><div class="repo-name-row"><span class="repo-icon">◆</span><span class="repo-name">dejavu-tools-card</span></div><p class="repo-desc">no description</p><div class="repo-meta"><span class="meta-i"><span class="lang-ind" style="background:#e34c26;box-shadow:0 0 6px #e34c26"></span>HTML</span></div></a>
-<a href="https://github.com/Fatkhl/rialo-demo-dapp" target="_blank" class="repo-card"><div class="repo-name-row"><span class="repo-icon">◆</span><span class="repo-name">rialo-demo-dapp</span></div><p class="repo-desc">no description</p><div class="repo-meta"><span class="meta-i"><span class="lang-ind" style="background:#e34c26;box-shadow:0 0 6px #e34c26"></span>HTML</span></div></a>
-<a href="https://github.com/Fatkhl/chainopera" target="_blank" class="repo-card"><div class="repo-name-row"><span class="repo-icon">◆</span><span class="repo-name">chainopera</span></div><p class="repo-desc">chainoperaautochat</p><div class="repo-meta"><span class="meta-i"><span class="lang-ind" style="background:#f1e05a;box-shadow:0 0 6px #f1e05a"></span>JavaScript</span></div></a>
-<a href="https://github.com/Fatkhl/dejavuaidrop" target="_blank" class="repo-card"><div class="repo-name-row"><span class="repo-icon">◆</span><span class="repo-name">dejavuaidrop</span></div><p class="repo-desc">no description</p><div class="repo-meta"><span class="meta-i"><span class="lang-ind" style="background:#3178c6;box-shadow:0 0 6px #3178c6"></span>TypeScript</span><span class="meta-i">⑂ 1</span></div></a>
+    <div class="repo-grid"><a href="https://github.com/Fatkhl/Huddle01-Auto-Bot" target="_blank" class="repo-card"><div class="repo-name-row"><span class="repo-icon">◆</span><span class="repo-name">Huddle01-Auto-Bot</span></div><p class="repo-desc">A Node.js bot for automatically joining Huddle01 test network rooms to collect testnet participation points</p><div class="repo-meta"><span class="mi"><span class="lind" style="background:#f1e05a;box-shadow:0 0 6px #f1e05a"></span>JavaScript</span><span class="mi">★ 1</span></div></a>
+<a href="https://github.com/Fatkhl/gh-portfolio-gen" target="_blank" class="repo-card"><div class="repo-name-row"><span class="repo-icon">◆</span><span class="repo-name">gh-portfolio-gen</span></div><p class="repo-desc">🚀 Auto-generate developer portfolio from GitHub data — one command, zero dependencies</p><div class="repo-meta"><span class="mi"><span class="lind" style="background:#3572A5;box-shadow:0 0 6px #3572A5"></span>Python</span></div></a>
+<a href="https://github.com/Fatkhl/portfolio" target="_blank" class="repo-card"><div class="repo-name-row"><span class="repo-icon">◆</span><span class="repo-name">portfolio</span></div><p class="repo-desc">Web3 Developer Portfolio — Blockchain × AI Automation</p><div class="repo-meta"><span class="mi"><span class="lind" style="background:#e34c26;box-shadow:0 0 6px #e34c26"></span>HTML</span></div></a>
+<a href="https://github.com/Fatkhl/hermes-agent-guide" target="_blank" class="repo-card"><div class="repo-name-row"><span class="repo-icon">◆</span><span class="repo-name">hermes-agent-guide</span></div><p class="repo-desc">Hermes AI Agent Setup Guide - Install, Configure, Make Agent Smart and Obedient</p><div class="repo-meta"><span class="mi"><span class="lind" style="background:#89e051;box-shadow:0 0 6px #89e051"></span>Shell</span></div></a>
+<a href="https://github.com/Fatkhl/rialhq-wallet" target="_blank" class="repo-card"><div class="repo-name-row"><span class="repo-icon">◆</span><span class="repo-name">rialhq-wallet</span></div><p class="repo-desc">RialHQ - EVM Multi-Chain Wallet Extension for Rialo Ecosystem</p><div class="repo-meta"><span class="mi"><span class="lind" style="background:#f1e05a;box-shadow:0 0 6px #f1e05a"></span>JavaScript</span></div></a>
+<a href="https://github.com/Fatkhl/dejavu-tools-card" target="_blank" class="repo-card"><div class="repo-name-row"><span class="repo-icon">◆</span><span class="repo-name">dejavu-tools-card</span></div><p class="repo-desc">no description</p><div class="repo-meta"><span class="mi"><span class="lind" style="background:#e34c26;box-shadow:0 0 6px #e34c26"></span>HTML</span></div></a>
+<a href="https://github.com/Fatkhl/rialo-demo-dapp" target="_blank" class="repo-card"><div class="repo-name-row"><span class="repo-icon">◆</span><span class="repo-name">rialo-demo-dapp</span></div><p class="repo-desc">no description</p><div class="repo-meta"><span class="mi"><span class="lind" style="background:#e34c26;box-shadow:0 0 6px #e34c26"></span>HTML</span></div></a>
+<a href="https://github.com/Fatkhl/chainopera" target="_blank" class="repo-card"><div class="repo-name-row"><span class="repo-icon">◆</span><span class="repo-name">chainopera</span></div><p class="repo-desc">chainoperaautochat</p><div class="repo-meta"><span class="mi"><span class="lind" style="background:#f1e05a;box-shadow:0 0 6px #f1e05a"></span>JavaScript</span></div></a>
+<a href="https://github.com/Fatkhl/dejavuaidrop" target="_blank" class="repo-card"><div class="repo-name-row"><span class="repo-icon">◆</span><span class="repo-name">dejavuaidrop</span></div><p class="repo-desc">no description</p><div class="repo-meta"><span class="mi"><span class="lind" style="background:#3178c6;box-shadow:0 0 6px #3178c6"></span>TypeScript</span><span class="mi">⑂ 1</span></div></a>
 <a href="https://github.com/Fatkhl/linera-protocol" target="_blank" class="repo-card"><div class="repo-name-row"><span class="repo-icon">◆</span><span class="repo-name">linera-protocol</span></div><p class="repo-desc">Main repository for the Linera protocol</p><div class="repo-meta"></div></a>
 <a href="https://github.com/Fatkhl/node" target="_blank" class="repo-card"><div class="repo-name-row"><span class="repo-icon">◆</span><span class="repo-name">node</span></div><p class="repo-desc">How to run an Ink Node</p><div class="repo-meta"></div></a>
 <a href="https://github.com/Fatkhl/CtrlPlayFrontend" target="_blank" class="repo-card"><div class="repo-name-row"><span class="repo-icon">◆</span><span class="repo-name">CtrlPlayFrontend</span></div><p class="repo-desc">A gaming hub built on AO by Arweave. </p><div class="repo-meta"></div></a></div>
 </div>
 </section>
 
+<!-- ACTIVITY -->
 <section class="section" id="activity">
 <div class="container">
     <div class="sec-hdr"><h2 class="sec-title">activity</h2><div class="sec-line"></div></div>
     <p class="sec-sub">// recent public contributions</p>
-    <div class="activity-list"><div class="act-row"><div class="act-icon">→</div><span class="act-type">Push</span><span class="act-repo">Fatkhl/gh-portfolio-gen</span><span class="act-date">2026-05-22</span></div>
-<div class="act-row"><div class="act-icon">→</div><span class="act-type">Push</span><span class="act-repo">Fatkhl/portfolio</span><span class="act-date">2026-05-22</span></div>
-<div class="act-row"><div class="act-icon">→</div><span class="act-type">Push</span><span class="act-repo">Fatkhl/portfolio</span><span class="act-date">2026-05-22</span></div>
-<div class="act-row"><div class="act-icon">+</div><span class="act-type">Create</span><span class="act-repo">Fatkhl/gh-portfolio-gen</span><span class="act-date">2026-05-22</span></div>
-<div class="act-row"><div class="act-icon">+</div><span class="act-type">Create</span><span class="act-repo">Fatkhl/hermes-agent-guide</span><span class="act-date">2026-05-22</span></div>
-<div class="act-row"><div class="act-icon">→</div><span class="act-type">Push</span><span class="act-repo">Fatkhl/portfolio</span><span class="act-date">2026-05-22</span></div>
-<div class="act-row"><div class="act-icon">→</div><span class="act-type">Push</span><span class="act-repo">Fatkhl/portfolio</span><span class="act-date">2026-05-22</span></div>
-<div class="act-row"><div class="act-icon">→</div><span class="act-type">Push</span><span class="act-repo">Fatkhl/portfolio</span><span class="act-date">2026-05-22</span></div>
-<div class="act-row"><div class="act-icon">→</div><span class="act-type">Push</span><span class="act-repo">Fatkhl/portfolio</span><span class="act-date">2026-05-22</span></div>
-<div class="act-row"><div class="act-icon">→</div><span class="act-type">Push</span><span class="act-repo">Fatkhl/portfolio</span><span class="act-date">2026-05-22</span></div></div>
+    <div class="alist"><div class="arow"><div class="aico">→</div><span class="atype">Push</span><span class="arepo">Fatkhl/gh-portfolio-gen</span><span class="adate">2026-05-22</span></div>
+<div class="arow"><div class="aico">→</div><span class="atype">Push</span><span class="arepo">Fatkhl/portfolio</span><span class="adate">2026-05-22</span></div>
+<div class="arow"><div class="aico">→</div><span class="atype">Push</span><span class="arepo">Fatkhl/gh-portfolio-gen</span><span class="adate">2026-05-22</span></div>
+<div class="arow"><div class="aico">→</div><span class="atype">Push</span><span class="arepo">Fatkhl/portfolio</span><span class="adate">2026-05-22</span></div>
+<div class="arow"><div class="aico">→</div><span class="atype">Push</span><span class="arepo">Fatkhl/portfolio</span><span class="adate">2026-05-22</span></div>
+<div class="arow"><div class="aico">+</div><span class="atype">Create</span><span class="arepo">Fatkhl/gh-portfolio-gen</span><span class="adate">2026-05-22</span></div>
+<div class="arow"><div class="aico">+</div><span class="atype">Create</span><span class="arepo">Fatkhl/hermes-agent-guide</span><span class="adate">2026-05-22</span></div>
+<div class="arow"><div class="aico">→</div><span class="atype">Push</span><span class="arepo">Fatkhl/portfolio</span><span class="adate">2026-05-22</span></div>
+<div class="arow"><div class="aico">→</div><span class="atype">Push</span><span class="arepo">Fatkhl/portfolio</span><span class="adate">2026-05-22</span></div>
+<div class="arow"><div class="aico">→</div><span class="atype">Push</span><span class="arepo">Fatkhl/portfolio</span><span class="adate">2026-05-22</span></div></div>
 </div>
 </section>
 
+<!-- FOOTER -->
 <footer class="footer">
 <div class="container">
-    <p class="footer-t">generated by <a href="https://github.com/Fatkhl/gh-portfolio-gen">gh-portfolio-gen</a> // 2026-05-22 09:37 UTC</p>
+    <p class="footer-t">generated by <a href="https://github.com/Fatkhl/gh-portfolio-gen">gh-portfolio-gen</a> // 2026-05-22 09:59 UTC</p>
 </div>
 </footer>
 </div>
 
-<script>
-// ═══ MATRIX RAIN ═══
-var mc = document.getElementById('matrix');
-var mctx = mc.getContext('2d');
-function mResize() { mc.width = innerWidth; mc.height = innerHeight; }
-mResize();
-addEventListener('resize', mResize);
+<!-- ═══ INTERACTIVE TERMINAL ═══ -->
+<button id="iterm-toggle" title="Open Terminal">█_</button>
+<div id="iterm">
+    <div id="iterm-bar">
+        <div id="iterm-dots"><span class="r"></span><span class="y"></span><span class="g"></span></div>
+        <span id="iterm-title">visitor@fatkhl — bash</span>
+    </div>
+    <div id="iterm-body">
+        <div class="it-output cyan">Welcome to the interactive terminal!</div>
+        <div class="it-output dim">Type <span class="ok">help</span> for available commands.</div>
+        <br>
+    </div>
+    <div class="it-input-row" style="padding:0 14px 14px">
+        <span class="it-prompt">visitor@fatkhl:~$</span>
+        <input type="text" class="it-input" id="iterm-input" autocomplete="off" spellcheck="false" placeholder="type a command...">
+    </div>
+</div>
 
-var mChars = '\u30A2\u30A4\u30A6\u30A8\u30AA\u30AB\u30AD\u30AF\u30B1\u30B301{}[]<>=/\\|;:@#$%^&*';
-var mFs = 13;
-var mDrops = [];
-for (var i = 0; i < Math.floor(innerWidth / mFs); i++) mDrops.push(Math.random() * -100);
-
-function matrixDraw() {
-    mctx.fillStyle = 'rgba(0,0,0,0.06)';
-    mctx.fillRect(0, 0, mc.width, mc.height);
-    mctx.font = mFs + 'px JetBrains Mono';
-    for (var i = 0; i < mDrops.length; i++) {
-        var ch = mChars[Math.floor(Math.random() * mChars.length)];
-        var br = Math.random();
-        if (br > 0.96) {
-            mctx.fillStyle = '#ffffff';
-            mctx.shadowColor = '#00ff41';
-            mctx.shadowBlur = 15;
-        } else {
-            mctx.fillStyle = 'rgba(0,255,65,' + (0.3 + Math.random() * 0.4) + ')';
-            mctx.shadowBlur = 0;
-        }
-        mctx.fillText(ch, i * mFs, mDrops[i] * mFs);
-        mctx.shadowBlur = 0;
-        if (mDrops[i] * mFs > mc.height && Math.random() > 0.975) mDrops[i] = 0;
-        mDrops[i]++;
-    }
-}
-setInterval(matrixDraw, 45);
-
-// ═══ RUNNING TERMINAL ═══
-var tCmds = [
-    {p:'~$', c:'nmap -sV 192.168.1.0/24', o:'Scanning 256 hosts...'},
-    {p:'~$', c:'ssh deploy@server-prod', o:'Connection established.'},
-    {p:'deploy@prod:~$', c:'docker compose up -d', o:'3 containers started'},
-    {p:'~$', c:'git push origin main', o:'Enumerating objects: 47, done.'},
-    {p:'~$', c:'python3 train.py --epochs 100', o:'Epoch 100/100 \u2014 loss: 0.0023'},
-    {p:'~$', c:'kubectl get pods --all-namespaces', o:'All pods running.'},
-    {p:'~$', c:'cargo build --release', o:'Compiling... finished in 12.3s'},
-    {p:'~$', c:'hermes chat -q "deploy to prod"', o:'Agent executing...'},
-    {p:'~$', c:'solana program deploy myapp.so', o:'Program deployed: 7xKX...9aBc'},
-    {p:'~$', c:'npx hardhat verify 0x1234...', o:'Contract verified \u2713'},
-    {p:'~$', c:'htop', o:'CPU: 23%  Mem: 4.2/8GB  Load: 1.24'},
-    {p:'~$', c:'tail -f /var/log/nginx/access.log', o:'200 GET /api/v1/users'},
-    {p:'~$', c:'forge test --gas-report', o:'32 tests passed, 0 failed'},
-    {p:'~$', c:'python3 bot.py --mode arbitrage', o:'3 opportunities found'},
-    {p:'~$', c:'npm run build && npm run deploy', o:'Deployed to Vercel.'},
-    {p:'~$', c:'sshuttle -r user@vps 10.0.0.0/8', o:'Tunneling traffic.'},
-    {p:'~$', c:'curl -s api.github.com/users/Fatkhl', o:'Fetching profile data...'},
-    {p:'~$', c:'docker ps --format "table"', o:'5 containers running'},
-    {p:'~$', c:'go build -o server ./cmd/api', o:'Build successful'},
-    {p:'~$', c:'cargo clippy -- -W clippy::all', o:'0 warnings, 0 errors'},
-];
-
-var tBox = document.getElementById('running-terminal');
-var tIdx = 0;
-
-function spawnTLine() {
-    var e = tCmds[tIdx % tCmds.length];
-    tIdx++;
-    var el = document.createElement('div');
-    el.className = 'tline';
-    var left = 3 + Math.random() * 85;
-    var dur = 18 + Math.random() * 22;
-    var delay = Math.random() * 2;
-    el.style.left = left + '%';
-    el.style.top = '100%';
-    el.style.animationDuration = dur + 's';
-    el.style.animationDelay = delay + 's';
-    el.style.fontSize = (9 + Math.random() * 3) + 'px';
-    el.innerHTML = '<span class="p">' + e.p + '</span> <span class="c">' + e.c + '</span><br><span class="o">' + e.o + '</span>';
-    tBox.appendChild(el);
-    setTimeout(function() { el.remove(); }, (dur + delay) * 1000);
-}
-
-setInterval(spawnTLine, 2200);
-for (var j = 0; j < 10; j++) setTimeout(spawnTLine, j * 350);
-
-// ═══ 3D CARD TILT ═══
-document.querySelectorAll('.repo-card').forEach(function(card) {
-    card.addEventListener('mousemove', function(e) {
-        var r = card.getBoundingClientRect();
-        var x = e.clientX - r.left;
-        var y = e.clientY - r.top;
-        var cx = r.width / 2;
-        var cy = r.height / 2;
-        var rx = ((y - cy) / cy) * -8;
-        var ry = ((x - cx) / cx) * 8;
-        card.style.setProperty('--rx', rx + 'deg');
-        card.style.setProperty('--ry', ry + 'deg');
-        card.style.setProperty('--mx', (x / r.width * 100) + '%');
-        card.style.setProperty('--my', (y / r.height * 100) + '%');
-        card.classList.add('tilted');
-    });
-    card.addEventListener('mouseleave', function() {
-        card.style.setProperty('--rx', '0deg');
-        card.style.setProperty('--ry', '0deg');
-        card.classList.remove('tilted');
-    });
-});
-
-// ═══ 3D AVATAR PARALLAX ═══
-var av = document.querySelector('.avatar-3d');
-if (av) {
-    document.addEventListener('mousemove', function(e) {
-        var cx = innerWidth / 2;
-        var cy = innerHeight / 2;
-        var rx = ((e.clientY - cy) / cy) * -6;
-        var ry = ((e.clientX - cx) / cx) * 10;
-        av.style.transform = 'rotateX(' + rx + 'deg) rotateY(' + ry + 'deg)';
-    });
-}
-
-// ═══ HERO 3D PARALLAX ═══
-var heroText = document.querySelector('.hero-text');
-if (heroText) {
-    document.addEventListener('mousemove', function(e) {
-        var cx = innerWidth / 2;
-        var cy = innerHeight / 2;
-        var mx = ((e.clientX - cx) / cx) * 3;
-        var my = ((e.clientY - cy) / cy) * 2;
-        heroText.style.transform = 'translateX(' + mx + 'px) translateY(' + my + 'px) translateZ(10px)';
-    });
-}
-
-// ═══ SCROLL REVEAL ═══
-var obs = new IntersectionObserver(function(entries) {
-    entries.forEach(function(e) { if (e.isIntersecting) e.target.classList.add('visible'); });
-}, { threshold: 0.1 });
-document.querySelectorAll('.repo-card,.act-row,.lang-i,.section').forEach(function(el) {
-    el.classList.add('reveal');
-    obs.observe(el);
-});
-
-// ═══ NAV ACTIVE ═══
-var secs = document.querySelectorAll('section[id]');
-addEventListener('scroll', function() {
-    var y = scrollY + 100;
-    secs.forEach(function(s) {
-        var t = s.offsetTop, h = s.offsetHeight, id = s.id;
-        var link = document.querySelector('.nav-links a[href="#' + id + '"]');
-        if (link) link.style.color = (y >= t && y < t + h) ? '#00ff41' : '';
-    });
-});
-</script>
+<script src="static/js/main.js"></script>
 </body>
 </html>
