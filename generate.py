@@ -37,7 +37,7 @@ Examples:
     )
     
     parser.add_argument("username", help="GitHub username")
-    parser.add_argument("--theme", choices=["cream", "dark", "ocean"], default="cream",
+    parser.add_argument("--theme", choices=["cream", "dark", "ocean", "hacker"], default="hacker",
                        help="Portfolio theme (default: cream)")
     parser.add_argument("--output", "-o", default="./output",
                        help="Output directory (default: ./output)")

@@ -1,0 +1,1101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>0xfatkhul // developer</title>
+    <meta name="description" content="0xfatkhul — airdrop is my live">
+    <meta name="theme-color" content="#0a0a0a">
+    <meta property="og:title" content="0xfatkhul // developer">
+    <meta property="og:description" content="airdrop is my live">
+    <meta property="og:image" content="https://avatars.githubusercontent.com/u/107779066?v=4">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    
+    <style>
+        /* ═══════════════════════════════════════════════════
+           HACKER THEME — Terminal Aesthetic
+           ═══════════════════════════════════════════════════ */
+        :root {
+            --bg: #0a0a0a;
+            --bg-card: #111111;
+            --bg-card-hover: #1a1a1a;
+            --border: #1e1e1e;
+            --border-glow: #00ff4120;
+            --text: #c8c8c8;
+            --text-dim: #666666;
+            --text-bright: #ffffff;
+            --green: #00ff41;
+            --green-dim: #00ff4140;
+            --green-glow: 0 0 20px #00ff4140, 0 0 40px #00ff4115;
+            --cyan: #00d4ff;
+            --cyan-dim: #00d4ff40;
+            --amber: #ffb000;
+            --red: #ff3333;
+            --purple: #b967ff;
+            --mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+            --sans: 'Inter', -apple-system, sans-serif;
+        }
+        
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        html { scroll-behavior: smooth; }
+        
+        body {
+            font-family: var(--mono);
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        /* ═══ Matrix Canvas ═══ */
+        #matrix {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            opacity: 0.07;
+            pointer-events: none;
+        }
+        
+        /* ═══ Scanlines ═══ */
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 2px,
+                rgba(0, 255, 65, 0.01) 2px,
+                rgba(0, 255, 65, 0.01) 4px
+            );
+            pointer-events: none;
+            z-index: 999;
+        }
+        
+        /* ═══ Container ═══ */
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 0 24px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        /* ═══ Navigation ═══ */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            padding: 12px 24px;
+            background: rgba(10, 10, 10, 0.9);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .nav-logo {
+            font-family: var(--mono);
+            font-size: 0.85rem;
+            color: var(--green);
+            text-decoration: none;
+            font-weight: 600;
+        }
+        
+        .nav-logo::before { content: '> '; color: var(--text-dim); }
+        
+        .nav-links {
+            display: flex;
+            gap: 24px;
+            list-style: none;
+        }
+        
+        .nav-links a {
+            color: var(--text-dim);
+            text-decoration: none;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            transition: color 0.3s;
+        }
+        
+        .nav-links a:hover { color: var(--green); }
+        
+        /* ═══ Hero ═══ */
+        .hero {
+            padding: 140px 0 80px;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+        }
+        
+        .hero-grid {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 48px;
+            align-items: center;
+        }
+        
+        .avatar-frame {
+            position: relative;
+            width: 180px;
+            height: 180px;
+        }
+        
+        .avatar-frame::before {
+            content: '';
+            position: absolute;
+            inset: -4px;
+            border: 2px solid var(--green);
+            border-radius: 4px;
+            animation: pulse-border 3s ease-in-out infinite;
+        }
+        
+        .avatar-frame::after {
+            content: '';
+            position: absolute;
+            inset: -8px;
+            border: 1px solid var(--green-dim);
+            border-radius: 6px;
+        }
+        
+        @keyframes pulse-border {
+            0%, 100% { opacity: 1; box-shadow: var(--green-glow); }
+            50% { opacity: 0.5; box-shadow: none; }
+        }
+        
+        .avatar {
+            width: 180px;
+            height: 180px;
+            border-radius: 4px;
+            object-fit: cover;
+            filter: grayscale(20%) contrast(1.1);
+            transition: all 0.4s;
+        }
+        
+        .avatar:hover {
+            filter: grayscale(0%) contrast(1.05);
+            box-shadow: var(--green-glow);
+        }
+        
+        .hero-content { max-width: 600px; }
+        
+        .terminal-line {
+            font-size: 0.75rem;
+            color: var(--text-dim);
+            margin-bottom: 8px;
+        }
+        
+        .terminal-line::before {
+            content: '$ ';
+            color: var(--green);
+        }
+        
+        .hero-name {
+            font-family: var(--mono);
+            font-size: 3rem;
+            font-weight: 700;
+            color: var(--text-bright);
+            margin-bottom: 4px;
+            position: relative;
+            display: inline-block;
+        }
+        
+        /* Glitch effect */
+        .hero-name::before,
+        .hero-name::after {
+            content: attr(data-text);
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .hero-name::before {
+            color: var(--cyan);
+            z-index: -1;
+            animation: glitch-1 3s infinite;
+        }
+        
+        .hero-name::after {
+            color: var(--red);
+            z-index: -2;
+            animation: glitch-2 3s infinite;
+        }
+        
+        @keyframes glitch-1 {
+            0%, 90%, 100% { clip-path: inset(0 0 0 0); transform: translate(0); }
+            92% { clip-path: inset(20% 0 60% 0); transform: translate(-3px, 1px); }
+            94% { clip-path: inset(50% 0 20% 0); transform: translate(3px, -1px); }
+            96% { clip-path: inset(10% 0 70% 0); transform: translate(-2px, 2px); }
+            98% { clip-path: inset(80% 0 5% 0); transform: translate(2px, -2px); }
+        }
+        
+        @keyframes glitch-2 {
+            0%, 90%, 100% { clip-path: inset(0 0 0 0); transform: translate(0); }
+            91% { clip-path: inset(60% 0 10% 0); transform: translate(2px, 2px); }
+            93% { clip-path: inset(30% 0 40% 0); transform: translate(-2px, -1px); }
+            95% { clip-path: inset(70% 0 15% 0); transform: translate(1px, 1px); }
+            97% { clip-path: inset(5% 0 80% 0); transform: translate(-1px, -2px); }
+        }
+        
+        .hero-handle {
+            font-size: 1rem;
+            color: var(--green);
+            margin-bottom: 20px;
+            opacity: 0.8;
+        }
+        
+        .hero-bio {
+            font-family: var(--sans);
+            font-size: 1rem;
+            color: var(--text);
+            line-height: 1.8;
+            margin-bottom: 24px;
+        }
+        
+        .hero-info {
+            font-size: 0.8rem;
+            color: var(--text-dim);
+            margin-bottom: 28px;
+        }
+        
+        .social-row {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin-bottom: 36px;
+        }
+        
+        .glitch-link {
+            font-family: var(--mono);
+            font-size: 0.8rem;
+            color: var(--text-dim);
+            text-decoration: none;
+            padding: 8px 16px;
+            border: 1px solid var(--border);
+            border-radius: 2px;
+            transition: all 0.3s;
+            position: relative;
+            text-transform: lowercase;
+        }
+        
+        .glitch-link::before { content: '[ '; color: var(--green); opacity: 0; transition: opacity 0.3s; }
+        .glitch-link::after { content: ' ]'; color: var(--green); opacity: 0; transition: opacity 0.3s; }
+        
+        .glitch-link:hover {
+            color: var(--green);
+            border-color: var(--green);
+            box-shadow: var(--green-glow);
+        }
+        
+        .glitch-link:hover::before,
+        .glitch-link:hover::after { opacity: 1; }
+        
+        /* ═══ Stats ═══ */
+        .stats-row {
+            display: flex;
+            gap: 32px;
+        }
+        
+        .stat {
+            text-align: left;
+        }
+        
+        .stat-val {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: var(--green);
+            line-height: 1;
+        }
+        
+        .stat-label {
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            margin-top: 4px;
+        }
+        
+        /* ═══ Section ═══ */
+        .section {
+            padding: 80px 0;
+            border-top: 1px solid var(--border);
+        }
+        
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 8px;
+        }
+        
+        .section-title {
+            font-family: var(--mono);
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--green);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+        
+        .section-title::before { content: '# '; color: var(--text-dim); }
+        
+        .section-line {
+            flex: 1;
+            height: 1px;
+            background: linear-gradient(90deg, var(--border), transparent);
+        }
+        
+        .section-subtitle {
+            font-family: var(--sans);
+            font-size: 0.85rem;
+            color: var(--text-dim);
+            margin-bottom: 40px;
+        }
+        
+        /* ═══ Language Bar ═══ */
+        .lang-bar {
+            display: flex;
+            height: 8px;
+            border-radius: 2px;
+            overflow: hidden;
+            margin-bottom: 20px;
+            border: 1px solid var(--border);
+        }
+        
+        .lang-segment {
+            height: 100%;
+            transition: all 0.3s;
+            position: relative;
+        }
+        
+        .lang-segment:hover {
+            filter: brightness(1.3);
+            box-shadow: 0 0 10px currentColor;
+        }
+        
+        .lang-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        
+        .lang-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.8rem;
+        }
+        
+        .lang-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 1px;
+            flex-shrink: 0;
+            box-shadow: 0 0 6px currentColor;
+        }
+        
+        .lang-name { color: var(--text); }
+        .lang-pct { color: var(--text-dim); font-size: 0.7rem; }
+        
+        /* ═══ Repo Grid ═══ */
+        .repo-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 16px;
+        }
+        
+        .repo-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 20px;
+            text-decoration: none;
+            color: inherit;
+            transition: all 0.3s;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .repo-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 2px;
+            height: 0;
+            background: var(--green);
+            transition: height 0.3s;
+        }
+        
+        .repo-card:hover {
+            border-color: var(--green);
+            background: var(--bg-card-hover);
+            box-shadow: var(--green-glow);
+            transform: translateY(-2px);
+        }
+        
+        .repo-card:hover::before { height: 100%; }
+        
+        .repo-name-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+        
+        .repo-icon {
+            color: var(--amber);
+            font-size: 0.9rem;
+        }
+        
+        .repo-name {
+            font-family: var(--mono);
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--cyan);
+        }
+        
+        .repo-desc {
+            font-family: var(--sans);
+            font-size: 0.82rem;
+            color: var(--text-dim);
+            margin-bottom: 14px;
+            flex: 1;
+            line-height: 1.6;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        
+        .repo-topics {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 10px;
+        }
+        
+        .topic {
+            padding: 2px 8px;
+            background: var(--green-dim);
+            color: var(--green);
+            border-radius: 2px;
+            font-size: 0.65rem;
+            font-weight: 500;
+            text-transform: lowercase;
+        }
+        
+        .repo-meta {
+            display: flex;
+            gap: 14px;
+            font-size: 0.72rem;
+            color: var(--text-dim);
+        }
+        
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .lang-indicator {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        
+        /* ═══ Activity ═══ */
+        .activity-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .activity-row {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 12px 16px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 2px;
+            transition: all 0.3s;
+            font-size: 0.82rem;
+        }
+        
+        .activity-row:hover {
+            border-color: var(--green);
+        }
+        
+        .activity-icon {
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85rem;
+            background: var(--green-dim);
+            border-radius: 2px;
+            flex-shrink: 0;
+        }
+        
+        .activity-type {
+            font-weight: 600;
+            color: var(--text);
+            min-width: 100px;
+        }
+        
+        .activity-repo {
+            color: var(--cyan);
+            flex: 1;
+            font-size: 0.78rem;
+        }
+        
+        .activity-date {
+            color: var(--text-dim);
+            font-size: 0.72rem;
+        }
+        
+        /* ═══ Typing Cursor ═══ */
+        .cursor {
+            display: inline-block;
+            width: 10px;
+            height: 1.2em;
+            background: var(--green);
+            margin-left: 4px;
+            animation: blink 1s step-end infinite;
+            vertical-align: text-bottom;
+        }
+        
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+        
+        /* ═══ Footer ═══ */
+        .footer {
+            padding: 40px 0;
+            border-top: 1px solid var(--border);
+            text-align: center;
+        }
+        
+        .footer-text {
+            font-size: 0.72rem;
+            color: var(--text-dim);
+        }
+        
+        .footer-text a {
+            color: var(--green);
+            text-decoration: none;
+        }
+        
+        .footer-text a:hover { text-decoration: underline; }
+        
+        /* ═══ Scroll Animations ═══ */
+        .reveal {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .reveal.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        /* ═══ Responsive ═══ */
+        @media (max-width: 768px) {
+            .hero { padding: 100px 0 60px; }
+            .hero-grid { grid-template-columns: 1fr; text-align: center; }
+            .avatar-frame { margin: 0 auto; width: 120px; height: 120px; }
+            .avatar { width: 120px; height: 120px; }
+            .hero-name { font-size: 2rem; }
+            .social-row { justify-content: center; }
+            .stats-row { justify-content: center; }
+            .repo-grid { grid-template-columns: 1fr; }
+            .nav-links { display: none; }
+            .activity-type { min-width: auto; }
+        }
+        
+        /* ═══ Selection ═══ */
+        ::selection {
+            background: var(--green);
+            color: var(--bg);
+        }
+        
+        /* ═══ Scrollbar ═══ */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--green); }
+    </style>
+</head>
+<body>
+    <!-- Matrix Rain Canvas -->
+    <canvas id="matrix"></canvas>
+    
+    <!-- Navigation -->
+    <nav>
+        <a href="#" class="nav-logo">Fatkhl</a>
+        <ul class="nav-links">
+            <li><a href="#about">about</a></li>
+            <li><a href="#stack">stack</a></li>
+            <li><a href="#projects">projects</a></li>
+            <li><a href="#activity">activity</a></li>
+        </ul>
+    </nav>
+    
+    <!-- Hero -->
+    <section class="hero" id="about">
+        <div class="container">
+            <div class="hero-grid">
+                <div class="avatar-frame">
+                    <img src="https://avatars.githubusercontent.com/u/107779066?v=4" alt="0xfatkhul" class="avatar">
+                </div>
+                <div class="hero-content">
+                    <p class="terminal-line">whoami</p>
+                    <h1 class="hero-name" data-text="0xfatkhul">0xfatkhul</h1>
+                    <p class="hero-handle">@Fatkhl<span class="cursor"></span></p>
+                    <p class="hero-bio">airdrop is my live</p>
+                    <p class="hero-info"></p>
+                    <div class="social-row">
+                        <a href="https://github.com/Fatkhl" target="_blank" class="glitch-link">github</a>
+                    </div>
+                    <div class="stats-row">
+                        <div class="stat">
+                            <div class="stat-val">13</div>
+                            <div class="stat-label">repos</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-val">1</div>
+                            <div class="stat-label">stars</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-val">4</div>
+                            <div class="stat-label">followers</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-val">7</div>
+                            <div class="stat-label">following</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Languages -->
+    <section class="section" id="stack">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">tech stack</h2>
+                <div class="section-line"></div>
+            </div>
+            <p class="section-subtitle">// languages used across repositories</p>
+            
+            <div class="lang-bar"><div class="lang-segment" style="width:33.3%;background:#e34c26;box-shadow:0 0 8px #e34c2640" title="HTML: 33.3%"></div><div class="lang-segment" style="width:33.3%;background:#f1e05a;box-shadow:0 0 8px #f1e05a40" title="JavaScript: 33.3%"></div><div class="lang-segment" style="width:11.1%;background:#3572A5;box-shadow:0 0 8px #3572A540" title="Python: 11.1%"></div><div class="lang-segment" style="width:11.1%;background:#89e051;box-shadow:0 0 8px #89e05140" title="Shell: 11.1%"></div><div class="lang-segment" style="width:11.1%;background:#3178c6;box-shadow:0 0 8px #3178c640" title="TypeScript: 11.1%"></div></div>
+            
+            <div class="lang-grid">
+                
+                <div class="lang-item">
+                    <span class="lang-dot" style="background:#e34c26;color:#e34c26"></span>
+                    <span class="lang-name">HTML</span>
+                    <span class="lang-pct">33.3%</span>
+                </div>
+
+                <div class="lang-item">
+                    <span class="lang-dot" style="background:#f1e05a;color:#f1e05a"></span>
+                    <span class="lang-name">JavaScript</span>
+                    <span class="lang-pct">33.3%</span>
+                </div>
+
+                <div class="lang-item">
+                    <span class="lang-dot" style="background:#3572A5;color:#3572A5"></span>
+                    <span class="lang-name">Python</span>
+                    <span class="lang-pct">11.1%</span>
+                </div>
+
+                <div class="lang-item">
+                    <span class="lang-dot" style="background:#89e051;color:#89e051"></span>
+                    <span class="lang-name">Shell</span>
+                    <span class="lang-pct">11.1%</span>
+                </div>
+
+                <div class="lang-item">
+                    <span class="lang-dot" style="background:#3178c6;color:#3178c6"></span>
+                    <span class="lang-name">TypeScript</span>
+                    <span class="lang-pct">11.1%</span>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Repositories -->
+    <section class="section" id="projects">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">projects</h2>
+                <div class="section-line"></div>
+            </div>
+            <p class="section-subtitle">// top repositories by stars</p>
+            
+            <div class="repo-grid">
+                
+                <a href="https://github.com/Fatkhl/Huddle01-Auto-Bot" target="_blank" class="repo-card">
+                    <div class="repo-name-row">
+                        <span class="repo-icon">◆</span>
+                        <span class="repo-name">Huddle01-Auto-Bot</span>
+                    </div>
+                    
+                    <p class="repo-desc">A Node.js bot for automatically joining Huddle01 test network rooms to collect testnet participation points</p>
+                    <div class="repo-meta">
+                        <span class="meta-item"><span class="lang-indicator" style="background:#f1e05a;box-shadow:0 0 6px #f1e05a"></span>JavaScript</span>
+                        <span class="meta-item">★ 1</span>
+                        
+                    </div>
+                </a>
+
+                <a href="https://github.com/Fatkhl/portfolio" target="_blank" class="repo-card">
+                    <div class="repo-name-row">
+                        <span class="repo-icon">◆</span>
+                        <span class="repo-name">portfolio</span>
+                    </div>
+                    
+                    <p class="repo-desc">Web3 Developer Portfolio — Blockchain × AI Automation</p>
+                    <div class="repo-meta">
+                        <span class="meta-item"><span class="lang-indicator" style="background:#e34c26;box-shadow:0 0 6px #e34c26"></span>HTML</span>
+                        
+                        
+                    </div>
+                </a>
+
+                <a href="https://github.com/Fatkhl/gh-portfolio-gen" target="_blank" class="repo-card">
+                    <div class="repo-name-row">
+                        <span class="repo-icon">◆</span>
+                        <span class="repo-name">gh-portfolio-gen</span>
+                    </div>
+                    
+                    <p class="repo-desc">🚀 Auto-generate developer portfolio from GitHub data — one command, zero dependencies</p>
+                    <div class="repo-meta">
+                        <span class="meta-item"><span class="lang-indicator" style="background:#3572A5;box-shadow:0 0 6px #3572A5"></span>Python</span>
+                        
+                        
+                    </div>
+                </a>
+
+                <a href="https://github.com/Fatkhl/hermes-agent-guide" target="_blank" class="repo-card">
+                    <div class="repo-name-row">
+                        <span class="repo-icon">◆</span>
+                        <span class="repo-name">hermes-agent-guide</span>
+                    </div>
+                    
+                    <p class="repo-desc">Hermes AI Agent Setup Guide - Install, Configure, Make Agent Smart and Obedient</p>
+                    <div class="repo-meta">
+                        <span class="meta-item"><span class="lang-indicator" style="background:#89e051;box-shadow:0 0 6px #89e051"></span>Shell</span>
+                        
+                        
+                    </div>
+                </a>
+
+                <a href="https://github.com/Fatkhl/rialhq-wallet" target="_blank" class="repo-card">
+                    <div class="repo-name-row">
+                        <span class="repo-icon">◆</span>
+                        <span class="repo-name">rialhq-wallet</span>
+                    </div>
+                    
+                    <p class="repo-desc">RialHQ - EVM Multi-Chain Wallet Extension for Rialo Ecosystem</p>
+                    <div class="repo-meta">
+                        <span class="meta-item"><span class="lang-indicator" style="background:#f1e05a;box-shadow:0 0 6px #f1e05a"></span>JavaScript</span>
+                        
+                        
+                    </div>
+                </a>
+
+                <a href="https://github.com/Fatkhl/dejavu-tools-card" target="_blank" class="repo-card">
+                    <div class="repo-name-row">
+                        <span class="repo-icon">◆</span>
+                        <span class="repo-name">dejavu-tools-card</span>
+                    </div>
+                    
+                    <p class="repo-desc">no description</p>
+                    <div class="repo-meta">
+                        <span class="meta-item"><span class="lang-indicator" style="background:#e34c26;box-shadow:0 0 6px #e34c26"></span>HTML</span>
+                        
+                        
+                    </div>
+                </a>
+
+                <a href="https://github.com/Fatkhl/rialo-demo-dapp" target="_blank" class="repo-card">
+                    <div class="repo-name-row">
+                        <span class="repo-icon">◆</span>
+                        <span class="repo-name">rialo-demo-dapp</span>
+                    </div>
+                    
+                    <p class="repo-desc">no description</p>
+                    <div class="repo-meta">
+                        <span class="meta-item"><span class="lang-indicator" style="background:#e34c26;box-shadow:0 0 6px #e34c26"></span>HTML</span>
+                        
+                        
+                    </div>
+                </a>
+
+                <a href="https://github.com/Fatkhl/chainopera" target="_blank" class="repo-card">
+                    <div class="repo-name-row">
+                        <span class="repo-icon">◆</span>
+                        <span class="repo-name">chainopera</span>
+                    </div>
+                    
+                    <p class="repo-desc">chainoperaautochat</p>
+                    <div class="repo-meta">
+                        <span class="meta-item"><span class="lang-indicator" style="background:#f1e05a;box-shadow:0 0 6px #f1e05a"></span>JavaScript</span>
+                        
+                        
+                    </div>
+                </a>
+
+                <a href="https://github.com/Fatkhl/dejavuaidrop" target="_blank" class="repo-card">
+                    <div class="repo-name-row">
+                        <span class="repo-icon">◆</span>
+                        <span class="repo-name">dejavuaidrop</span>
+                    </div>
+                    
+                    <p class="repo-desc">no description</p>
+                    <div class="repo-meta">
+                        <span class="meta-item"><span class="lang-indicator" style="background:#3178c6;box-shadow:0 0 6px #3178c6"></span>TypeScript</span>
+                        
+                        <span class="meta-item">⑂ 1</span>
+                    </div>
+                </a>
+
+                <a href="https://github.com/Fatkhl/linera-protocol" target="_blank" class="repo-card">
+                    <div class="repo-name-row">
+                        <span class="repo-icon">◆</span>
+                        <span class="repo-name">linera-protocol</span>
+                    </div>
+                    
+                    <p class="repo-desc">Main repository for the Linera protocol</p>
+                    <div class="repo-meta">
+                        
+                        
+                        
+                    </div>
+                </a>
+
+                <a href="https://github.com/Fatkhl/node" target="_blank" class="repo-card">
+                    <div class="repo-name-row">
+                        <span class="repo-icon">◆</span>
+                        <span class="repo-name">node</span>
+                    </div>
+                    
+                    <p class="repo-desc">How to run an Ink Node</p>
+                    <div class="repo-meta">
+                        
+                        
+                        
+                    </div>
+                </a>
+
+                <a href="https://github.com/Fatkhl/CtrlPlayFrontend" target="_blank" class="repo-card">
+                    <div class="repo-name-row">
+                        <span class="repo-icon">◆</span>
+                        <span class="repo-name">CtrlPlayFrontend</span>
+                    </div>
+                    
+                    <p class="repo-desc">A gaming hub built on AO by Arweave. </p>
+                    <div class="repo-meta">
+                        
+                        
+                        
+                    </div>
+                </a>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Activity -->
+    <section class="section" id="activity">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">activity</h2>
+                <div class="section-line"></div>
+            </div>
+            <p class="section-subtitle">// recent public contributions</p>
+            
+            <div class="activity-list">
+                
+                <div class="activity-row">
+                    <div class="activity-icon">→</div>
+                    <span class="activity-type">Push</span>
+                    <span class="activity-repo">Fatkhl/portfolio</span>
+                    <span class="activity-date">2026-05-22</span>
+                </div>
+
+                <div class="activity-row">
+                    <div class="activity-icon">+</div>
+                    <span class="activity-type">Create</span>
+                    <span class="activity-repo">Fatkhl/gh-portfolio-gen</span>
+                    <span class="activity-date">2026-05-22</span>
+                </div>
+
+                <div class="activity-row">
+                    <div class="activity-icon">+</div>
+                    <span class="activity-type">Create</span>
+                    <span class="activity-repo">Fatkhl/hermes-agent-guide</span>
+                    <span class="activity-date">2026-05-22</span>
+                </div>
+
+                <div class="activity-row">
+                    <div class="activity-icon">→</div>
+                    <span class="activity-type">Push</span>
+                    <span class="activity-repo">Fatkhl/portfolio</span>
+                    <span class="activity-date">2026-05-22</span>
+                </div>
+
+                <div class="activity-row">
+                    <div class="activity-icon">→</div>
+                    <span class="activity-type">Push</span>
+                    <span class="activity-repo">Fatkhl/portfolio</span>
+                    <span class="activity-date">2026-05-22</span>
+                </div>
+
+                <div class="activity-row">
+                    <div class="activity-icon">→</div>
+                    <span class="activity-type">Push</span>
+                    <span class="activity-repo">Fatkhl/portfolio</span>
+                    <span class="activity-date">2026-05-22</span>
+                </div>
+
+                <div class="activity-row">
+                    <div class="activity-icon">→</div>
+                    <span class="activity-type">Push</span>
+                    <span class="activity-repo">Fatkhl/portfolio</span>
+                    <span class="activity-date">2026-05-22</span>
+                </div>
+
+                <div class="activity-row">
+                    <div class="activity-icon">→</div>
+                    <span class="activity-type">Push</span>
+                    <span class="activity-repo">Fatkhl/portfolio</span>
+                    <span class="activity-date">2026-05-22</span>
+                </div>
+
+                <div class="activity-row">
+                    <div class="activity-icon">→</div>
+                    <span class="activity-type">Push</span>
+                    <span class="activity-repo">Fatkhl/portfolio</span>
+                    <span class="activity-date">2026-05-22</span>
+                </div>
+
+                <div class="activity-row">
+                    <div class="activity-icon">→</div>
+                    <span class="activity-type">Push</span>
+                    <span class="activity-repo">Fatkhl/portfolio</span>
+                    <span class="activity-date">2026-05-22</span>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p class="footer-text">
+                generated by <a href="https://github.com/Fatkhl/gh-portfolio-gen">gh-portfolio-gen</a>
+                // 2026-05-22 09:25 UTC
+            </p>
+        </div>
+    </footer>
+    
+    <script>
+        // ═══ Matrix Rain ═══
+        const canvas = document.getElementById('matrix');
+        const ctx = canvas.getContext('2d');
+        
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+        
+        const chars = 'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ<>{}[]|/\';
+        const fontSize = 14;
+        const columns = Math.floor(canvas.width / fontSize);
+        const drops = Array(columns).fill(1);
+        
+        function drawMatrix() {
+            ctx.fillStyle = 'rgba(10, 10, 10, 0.05)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#00ff41';
+            ctx.font = fontSize + 'px JetBrains Mono';
+            
+            for (let i = 0; i < drops.length; i++) {
+                const char = chars[Math.floor(Math.random() * chars.length)];
+                ctx.fillText(char, i * fontSize, drops[i] * fontSize);
+                
+                if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+                    drops[i] = 0;
+                }
+                drops[i]++;
+            }
+        }
+        setInterval(drawMatrix, 50);
+        
+        // ═══ Scroll Reveal ═══
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, { threshold: 0.1 });
+        
+        document.querySelectorAll('.repo-card, .activity-row, .lang-item, .section').forEach(el => {
+            el.classList.add('reveal');
+            observer.observe(el);
+        });
+        
+        // ═══ Typing Effect on Bio ═══
+        // (cursor blink is CSS-only, no JS needed for static text)
+        
+        // ═══ Nav active state ═══
+        const sections = document.querySelectorAll('section[id]');
+        window.addEventListener('scroll', () => {
+            const scrollY = window.scrollY + 100;
+            sections.forEach(section => {
+                const top = section.offsetTop;
+                const height = section.offsetHeight;
+                const id = section.getAttribute('id');
+                const link = document.querySelector(`.nav-links a[href="#${id}"]`);
+                if (link) {
+                    if (scrollY >= top && scrollY < top + height) {
+                        link.style.color = '#00ff41';
+                    } else {
+                        link.style.color = '';
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>

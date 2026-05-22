@@ -1,6 +1,6 @@
 """
-Template Engine
-Generates portfolio HTML from templates and data.
+Template Engine — Hacker Theme Edition
+Generates portfolio HTML with hacker/terminal aesthetic.
 """
 
 import os
@@ -10,9 +10,9 @@ from pathlib import Path
 
 
 class TemplateEngine:
-    """Generate portfolio HTML from data and templates."""
+    """Generate hacker-themed portfolio from data."""
     
-    def __init__(self, theme: str = "cream"):
+    def __init__(self, theme: str = "hacker"):
         self.theme = theme
         self.template_dir = Path(__file__).parent.parent / "templates"
         self.static_dir = Path(__file__).parent.parent / "static"
@@ -20,19 +20,13 @@ class TemplateEngine:
     def generate(self, data: dict, output_path: Path):
         """Generate the complete portfolio site."""
         output_path.mkdir(parents=True, exist_ok=True)
-        
-        # Copy static assets
         self._copy_static(output_path)
-        
-        # Generate index.html
         html = self._render_index(data)
         (output_path / "index.html").write_text(html, encoding="utf-8")
-        
-        # Generate .nojekyll for GitHub Pages
         (output_path / ".nojekyll").touch()
     
     def _copy_static(self, output_path: Path):
-        """Copy CSS/JS/fonts to output."""
+        """Copy static assets."""
         static_out = output_path / "static"
         if static_out.exists():
             shutil.rmtree(static_out)
@@ -40,25 +34,16 @@ class TemplateEngine:
             shutil.copytree(self.static_dir, static_out)
     
     def _render_index(self, data: dict) -> str:
-        """Render the main index.html."""
         profile = data["profile"]
         repos = data["repos"]
         languages = data["languages"]
         contributions = data["contributions"]
         
-        # Build repo cards HTML
         repo_cards = self._build_repo_cards(repos[:12])
-        
-        # Build language bar HTML
         lang_bar = self._build_language_bar(languages)
-        
-        # Build language list HTML
         lang_list = self._build_language_list(languages)
-        
-        # Build recent activity HTML
         activity_html = self._build_activity(contributions.get("recent_activity", []))
         
-        # Profile data
         name = profile.get("name", profile.get("username", ""))
         username = profile.get("username", "")
         bio = profile.get("bio", "") or "Developer"
@@ -71,346 +56,507 @@ class TemplateEngine:
         followers = profile.get("followers", 0)
         following = profile.get("following", 0)
         public_repos = profile.get("public_repos", 0)
-        
-        # Social links
-        social_links = f'<a href="{github_url}" target="_blank" class="social-link" title="GitHub">GitHub</a>'
-        if blog:
-            social_links += f'\n            <a href="{blog}" target="_blank" class="social-link" title="Website">Website</a>'
-        if twitter:
-            social_links += f'\n            <a href="https://twitter.com/{twitter}" target="_blank" class="social-link" title="Twitter">Twitter</a>'
-        
-        # Location/Company info
-        info_parts = []
-        if company:
-            info_parts.append(f'<span class="info-item">🏢 {company}</span>')
-        if location:
-            info_parts.append(f'<span class="info-item">📍 {location}</span>')
-        info_html = "\n            ".join(info_parts)
-        
-        # Stats
         total_stars = sum(r.get("stars", 0) for r in repos)
         
-        html = f"""<!DOCTYPE html>
+        # Social links
+        social_links = f'<a href="{github_url}" target="_blank" class="glitch-link">github</a>'
+        if blog:
+            social_links += f'\n        <a href="{blog}" target="_blank" class="glitch-link">website</a>'
+        if twitter:
+            social_links += f'\n        <a href="https://twitter.com/{twitter}" target="_blank" class="glitch-link">twitter</a>'
+        
+        # Info line
+        info_parts = []
+        if company:
+            info_parts.append(f'@ {company}')
+        if location:
+            info_parts.append(f'📍 {location}')
+        info_text = " │ ".join(info_parts) if info_parts else ""
+        
+        # Terminal bio lines
+        bio_lines = self._split_bio(bio)
+        
+        html = f'''<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{name} — Developer Portfolio</title>
+    <title>{name} // developer</title>
     <meta name="description" content="{name} — {bio}">
-    <meta name="theme-color" content="#f5f0e8">
-    
-    <!-- Open Graph -->
-    <meta property="og:title" content="{name} — Developer Portfolio">
+    <meta name="theme-color" content="#0a0a0a">
+    <meta property="og:title" content="{name} // developer">
     <meta property="og:description" content="{bio}">
     <meta property="og:image" content="{avatar}">
-    <meta property="og:type" content="website">
     
-    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     
     <style>
         /* ═══════════════════════════════════════════════════
-           CSS Variables — Cream/Warm Theme
+           HACKER THEME — Terminal Aesthetic
            ═══════════════════════════════════════════════════ */
         :root {{
-            --bg-primary: #f5f0e8;
-            --bg-secondary: #ede8df;
-            --bg-card: #ffffff;
-            --bg-card-hover: #faf8f4;
-            --text-primary: #1a1714;
-            --text-secondary: #5c564a;
-            --text-muted: #8a8478;
-            --accent: #c4956a;
-            --accent-hover: #b3844d;
-            --accent-light: rgba(196, 149, 106, 0.15);
-            --border: #e0dbd2;
-            --border-light: #eae5dc;
-            --shadow: 0 2px 12px rgba(26, 23, 20, 0.06);
-            --shadow-hover: 0 8px 30px rgba(26, 23, 20, 0.12);
-            --radius: 16px;
-            --radius-sm: 10px;
-            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --bg: #0a0a0a;
+            --bg-card: #111111;
+            --bg-card-hover: #1a1a1a;
+            --border: #1e1e1e;
+            --border-glow: #00ff4120;
+            --text: #c8c8c8;
+            --text-dim: #666666;
+            --text-bright: #ffffff;
+            --green: #00ff41;
+            --green-dim: #00ff4140;
+            --green-glow: 0 0 20px #00ff4140, 0 0 40px #00ff4115;
+            --cyan: #00d4ff;
+            --cyan-dim: #00d4ff40;
+            --amber: #ffb000;
+            --red: #ff3333;
+            --purple: #b967ff;
+            --mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+            --sans: 'Inter', -apple-system, sans-serif;
         }}
         
-        /* ═══ Reset & Base ═══ */
-        *, *::before, *::after {{
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }}
+        *, *::before, *::after {{ margin: 0; padding: 0; box-sizing: border-box; }}
         
-        html {{
-            scroll-behavior: smooth;
-        }}
+        html {{ scroll-behavior: smooth; }}
         
         body {{
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: var(--bg-primary);
-            color: var(--text-primary);
-            line-height: 1.6;
+            font-family: var(--mono);
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
             min-height: 100vh;
+            overflow-x: hidden;
         }}
         
-        /* ═══ Subtle Background Pattern ═══ */
-        body::before {{
+        /* ═══ Matrix Canvas ═══ */
+        #matrix {{
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            opacity: 0.07;
+            pointer-events: none;
+        }}
+        
+        /* ═══ Scanlines ═══ */
+        body::after {{
             content: '';
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: 
-                radial-gradient(circle at 20% 50%, rgba(196, 149, 106, 0.08) 0%, transparent 50%),
-                radial-gradient(circle at 80% 20%, rgba(196, 149, 106, 0.05) 0%, transparent 50%),
-                radial-gradient(circle at 50% 80%, rgba(196, 149, 106, 0.03) 0%, transparent 50%);
+            background: repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 2px,
+                rgba(0, 255, 65, 0.01) 2px,
+                rgba(0, 255, 65, 0.01) 4px
+            );
             pointer-events: none;
-            z-index: -1;
+            z-index: 999;
         }}
         
         /* ═══ Container ═══ */
         .container {{
-            max-width: 1100px;
+            max-width: 1000px;
             margin: 0 auto;
             padding: 0 24px;
+            position: relative;
+            z-index: 1;
         }}
         
-        /* ═══ Hero Section ═══ */
+        /* ═══ Navigation ═══ */
+        nav {{
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            padding: 12px 24px;
+            background: rgba(10, 10, 10, 0.9);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }}
+        
+        .nav-logo {{
+            font-family: var(--mono);
+            font-size: 0.85rem;
+            color: var(--green);
+            text-decoration: none;
+            font-weight: 600;
+        }}
+        
+        .nav-logo::before {{ content: '> '; color: var(--text-dim); }}
+        
+        .nav-links {{
+            display: flex;
+            gap: 24px;
+            list-style: none;
+        }}
+        
+        .nav-links a {{
+            color: var(--text-dim);
+            text-decoration: none;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            transition: color 0.3s;
+        }}
+        
+        .nav-links a:hover {{ color: var(--green); }}
+        
+        /* ═══ Hero ═══ */
         .hero {{
-            padding: 80px 0 60px;
-            text-align: center;
+            padding: 140px 0 80px;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+        }}
+        
+        .hero-grid {{
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 48px;
+            align-items: center;
+        }}
+        
+        .avatar-frame {{
+            position: relative;
+            width: 180px;
+            height: 180px;
+        }}
+        
+        .avatar-frame::before {{
+            content: '';
+            position: absolute;
+            inset: -4px;
+            border: 2px solid var(--green);
+            border-radius: 4px;
+            animation: pulse-border 3s ease-in-out infinite;
+        }}
+        
+        .avatar-frame::after {{
+            content: '';
+            position: absolute;
+            inset: -8px;
+            border: 1px solid var(--green-dim);
+            border-radius: 6px;
+        }}
+        
+        @keyframes pulse-border {{
+            0%, 100% {{ opacity: 1; box-shadow: var(--green-glow); }}
+            50% {{ opacity: 0.5; box-shadow: none; }}
         }}
         
         .avatar {{
-            width: 140px;
-            height: 140px;
-            border-radius: 50%;
-            border: 4px solid var(--bg-card);
-            box-shadow: var(--shadow);
-            margin-bottom: 24px;
-            transition: var(--transition);
+            width: 180px;
+            height: 180px;
+            border-radius: 4px;
+            object-fit: cover;
+            filter: grayscale(20%) contrast(1.1);
+            transition: all 0.4s;
         }}
         
         .avatar:hover {{
-            transform: scale(1.05);
-            box-shadow: var(--shadow-hover);
+            filter: grayscale(0%) contrast(1.05);
+            box-shadow: var(--green-glow);
+        }}
+        
+        .hero-content {{ max-width: 600px; }}
+        
+        .terminal-line {{
+            font-size: 0.75rem;
+            color: var(--text-dim);
+            margin-bottom: 8px;
+        }}
+        
+        .terminal-line::before {{
+            content: '$ ';
+            color: var(--green);
         }}
         
         .hero-name {{
-            font-size: 2.5rem;
+            font-family: var(--mono);
+            font-size: 3rem;
             font-weight: 700;
-            letter-spacing: -0.02em;
-            margin-bottom: 8px;
-            color: var(--text-primary);
+            color: var(--text-bright);
+            margin-bottom: 4px;
+            position: relative;
+            display: inline-block;
         }}
         
-        .hero-username {{
-            font-size: 1.1rem;
-            color: var(--text-muted);
-            font-weight: 400;
-            margin-bottom: 16px;
+        /* Glitch effect */
+        .hero-name::before,
+        .hero-name::after {{
+            content: attr(data-text);
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }}
+        
+        .hero-name::before {{
+            color: var(--cyan);
+            z-index: -1;
+            animation: glitch-1 3s infinite;
+        }}
+        
+        .hero-name::after {{
+            color: var(--red);
+            z-index: -2;
+            animation: glitch-2 3s infinite;
+        }}
+        
+        @keyframes glitch-1 {{
+            0%, 90%, 100% {{ clip-path: inset(0 0 0 0); transform: translate(0); }}
+            92% {{ clip-path: inset(20% 0 60% 0); transform: translate(-3px, 1px); }}
+            94% {{ clip-path: inset(50% 0 20% 0); transform: translate(3px, -1px); }}
+            96% {{ clip-path: inset(10% 0 70% 0); transform: translate(-2px, 2px); }}
+            98% {{ clip-path: inset(80% 0 5% 0); transform: translate(2px, -2px); }}
+        }}
+        
+        @keyframes glitch-2 {{
+            0%, 90%, 100% {{ clip-path: inset(0 0 0 0); transform: translate(0); }}
+            91% {{ clip-path: inset(60% 0 10% 0); transform: translate(2px, 2px); }}
+            93% {{ clip-path: inset(30% 0 40% 0); transform: translate(-2px, -1px); }}
+            95% {{ clip-path: inset(70% 0 15% 0); transform: translate(1px, 1px); }}
+            97% {{ clip-path: inset(5% 0 80% 0); transform: translate(-1px, -2px); }}
+        }}
+        
+        .hero-handle {{
+            font-size: 1rem;
+            color: var(--green);
+            margin-bottom: 20px;
+            opacity: 0.8;
         }}
         
         .hero-bio {{
-            font-size: 1.15rem;
-            color: var(--text-secondary);
-            max-width: 500px;
-            margin: 0 auto 20px;
-            line-height: 1.7;
-        }}
-        
-        .hero-info {{
-            display: flex;
-            gap: 20px;
-            justify-content: center;
-            flex-wrap: wrap;
+            font-family: var(--sans);
+            font-size: 1rem;
+            color: var(--text);
+            line-height: 1.8;
             margin-bottom: 24px;
         }}
         
-        .info-item {{
-            font-size: 0.9rem;
-            color: var(--text-muted);
+        .hero-info {{
+            font-size: 0.8rem;
+            color: var(--text-dim);
+            margin-bottom: 28px;
         }}
         
-        .social-links {{
+        .social-row {{
             display: flex;
-            gap: 12px;
-            justify-content: center;
+            gap: 16px;
             flex-wrap: wrap;
-            margin-bottom: 32px;
+            margin-bottom: 36px;
         }}
         
-        .social-link {{
-            display: inline-flex;
-            align-items: center;
-            padding: 10px 20px;
-            background: var(--bg-card);
-            color: var(--text-primary);
+        .glitch-link {{
+            font-family: var(--mono);
+            font-size: 0.8rem;
+            color: var(--text-dim);
             text-decoration: none;
-            border-radius: var(--radius-sm);
-            font-size: 0.9rem;
-            font-weight: 500;
+            padding: 8px 16px;
             border: 1px solid var(--border);
-            transition: var(--transition);
+            border-radius: 2px;
+            transition: all 0.3s;
+            position: relative;
+            text-transform: lowercase;
         }}
         
-        .social-link:hover {{
-            background: var(--accent);
-            color: white;
-            border-color: var(--accent);
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-hover);
+        .glitch-link::before {{ content: '[ '; color: var(--green); opacity: 0; transition: opacity 0.3s; }}
+        .glitch-link::after {{ content: ' ]'; color: var(--green); opacity: 0; transition: opacity 0.3s; }}
+        
+        .glitch-link:hover {{
+            color: var(--green);
+            border-color: var(--green);
+            box-shadow: var(--green-glow);
         }}
+        
+        .glitch-link:hover::before,
+        .glitch-link:hover::after {{ opacity: 1; }}
         
         /* ═══ Stats ═══ */
-        .stats {{
+        .stats-row {{
             display: flex;
             gap: 32px;
-            justify-content: center;
-            flex-wrap: wrap;
         }}
         
         .stat {{
-            text-align: center;
+            text-align: left;
         }}
         
-        .stat-value {{
-            font-size: 1.8rem;
+        .stat-val {{
+            font-size: 1.6rem;
             font-weight: 700;
-            color: var(--accent);
+            color: var(--green);
+            line-height: 1;
         }}
         
         .stat-label {{
-            font-size: 0.8rem;
-            color: var(--text-muted);
+            font-size: 0.65rem;
+            color: var(--text-dim);
             text-transform: uppercase;
-            letter-spacing: 0.05em;
+            letter-spacing: 0.15em;
+            margin-top: 4px;
         }}
         
         /* ═══ Section ═══ */
         .section {{
-            padding: 60px 0;
+            padding: 80px 0;
+            border-top: 1px solid var(--border);
+        }}
+        
+        .section-header {{
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 8px;
         }}
         
         .section-title {{
-            font-size: 1.5rem;
-            font-weight: 700;
-            margin-bottom: 8px;
-            color: var(--text-primary);
-            display: flex;
-            align-items: center;
-            gap: 10px;
+            font-family: var(--mono);
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--green);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
         }}
         
-        .section-title::before {{
-            content: '';
-            width: 4px;
-            height: 24px;
-            background: var(--accent);
-            border-radius: 2px;
+        .section-title::before {{ content: '# '; color: var(--text-dim); }}
+        
+        .section-line {{
+            flex: 1;
+            height: 1px;
+            background: linear-gradient(90deg, var(--border), transparent);
         }}
         
         .section-subtitle {{
-            font-size: 0.95rem;
-            color: var(--text-muted);
-            margin-bottom: 32px;
+            font-family: var(--sans);
+            font-size: 0.85rem;
+            color: var(--text-dim);
+            margin-bottom: 40px;
         }}
         
         /* ═══ Language Bar ═══ */
         .lang-bar {{
             display: flex;
-            height: 12px;
-            border-radius: 6px;
+            height: 8px;
+            border-radius: 2px;
             overflow: hidden;
-            margin-bottom: 16px;
-            box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+            border: 1px solid var(--border);
         }}
         
-        .lang-bar-segment {{
+        .lang-segment {{
             height: 100%;
-            transition: var(--transition);
+            transition: all 0.3s;
+            position: relative;
         }}
         
-        .lang-bar-segment:hover {{
-            opacity: 0.8;
-            transform: scaleY(1.2);
+        .lang-segment:hover {{
+            filter: brightness(1.3);
+            box-shadow: 0 0 10px currentColor;
         }}
         
-        .lang-list {{
+        .lang-grid {{
             display: flex;
             flex-wrap: wrap;
-            gap: 16px;
+            gap: 20px;
         }}
         
         .lang-item {{
             display: flex;
             align-items: center;
             gap: 8px;
-            font-size: 0.85rem;
-            color: var(--text-secondary);
+            font-size: 0.8rem;
         }}
         
         .lang-dot {{
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
+            width: 8px;
+            height: 8px;
+            border-radius: 1px;
             flex-shrink: 0;
+            box-shadow: 0 0 6px currentColor;
         }}
         
-        .lang-name {{
-            font-weight: 500;
-        }}
+        .lang-name {{ color: var(--text); }}
+        .lang-pct {{ color: var(--text-dim); font-size: 0.7rem; }}
         
-        .lang-percent {{
-            color: var(--text-muted);
-        }}
-        
-        /* ═══ Repo Cards ═══ */
+        /* ═══ Repo Grid ═══ */
         .repo-grid {{
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-            gap: 20px;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 16px;
         }}
         
         .repo-card {{
             background: var(--bg-card);
-            border: 1px solid var(--border-light);
-            border-radius: var(--radius);
-            padding: 24px;
-            transition: var(--transition);
-            display: flex;
-            flex-direction: column;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 20px;
             text-decoration: none;
             color: inherit;
+            transition: all 0.3s;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }}
+        
+        .repo-card::before {{
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 2px;
+            height: 0;
+            background: var(--green);
+            transition: height 0.3s;
         }}
         
         .repo-card:hover {{
-            transform: translateY(-4px);
-            box-shadow: var(--shadow-hover);
-            border-color: var(--accent);
+            border-color: var(--green);
             background: var(--bg-card-hover);
+            box-shadow: var(--green-glow);
+            transform: translateY(-2px);
         }}
         
-        .repo-name {{
-            font-size: 1.1rem;
-            font-weight: 600;
-            color: var(--accent);
-            margin-bottom: 8px;
+        .repo-card:hover::before {{ height: 100%; }}
+        
+        .repo-name-row {{
             display: flex;
             align-items: center;
             gap: 8px;
+            margin-bottom: 10px;
         }}
         
-        .repo-name::before {{
-            content: '⬡';
-            font-size: 0.8em;
+        .repo-icon {{
+            color: var(--amber);
+            font-size: 0.9rem;
+        }}
+        
+        .repo-name {{
+            font-family: var(--mono);
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--cyan);
         }}
         
         .repo-desc {{
-            font-size: 0.9rem;
-            color: var(--text-secondary);
-            margin-bottom: 16px;
+            font-family: var(--sans);
+            font-size: 0.82rem;
+            color: var(--text-dim);
+            margin-bottom: 14px;
             flex: 1;
             line-height: 1.6;
             display: -webkit-box;
@@ -419,215 +565,248 @@ class TemplateEngine:
             overflow: hidden;
         }}
         
-        .repo-meta {{
+        .repo-topics {{
             display: flex;
-            gap: 16px;
             flex-wrap: wrap;
-            font-size: 0.8rem;
-            color: var(--text-muted);
+            gap: 6px;
+            margin-bottom: 10px;
         }}
         
-        .repo-meta-item {{
+        .topic {{
+            padding: 2px 8px;
+            background: var(--green-dim);
+            color: var(--green);
+            border-radius: 2px;
+            font-size: 0.65rem;
+            font-weight: 500;
+            text-transform: lowercase;
+        }}
+        
+        .repo-meta {{
+            display: flex;
+            gap: 14px;
+            font-size: 0.72rem;
+            color: var(--text-dim);
+        }}
+        
+        .meta-item {{
             display: flex;
             align-items: center;
             gap: 4px;
         }}
         
-        .repo-lang-dot {{
-            width: 8px;
-            height: 8px;
+        .lang-indicator {{
+            width: 6px;
+            height: 6px;
             border-radius: 50%;
             display: inline-block;
-        }}
-        
-        .repo-topics {{
-            display: flex;
-            flex-wrap: wrap;
-            gap: 6px;
-            margin-bottom: 12px;
-        }}
-        
-        .topic-tag {{
-            padding: 3px 10px;
-            background: var(--accent-light);
-            color: var(--accent);
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 500;
         }}
         
         /* ═══ Activity ═══ */
         .activity-list {{
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 8px;
         }}
         
-        .activity-item {{
+        .activity-row {{
             display: flex;
             align-items: center;
-            gap: 12px;
-            padding: 14px 18px;
+            gap: 14px;
+            padding: 12px 16px;
             background: var(--bg-card);
-            border: 1px solid var(--border-light);
-            border-radius: var(--radius-sm);
-            transition: var(--transition);
+            border: 1px solid var(--border);
+            border-radius: 2px;
+            transition: all 0.3s;
+            font-size: 0.82rem;
         }}
         
-        .activity-item:hover {{
-            border-color: var(--accent);
+        .activity-row:hover {{
+            border-color: var(--green);
         }}
         
         .activity-icon {{
-            width: 36px;
-            height: 36px;
-            background: var(--accent-light);
-            border-radius: 8px;
+            width: 28px;
+            height: 28px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
+            background: var(--green-dim);
+            border-radius: 2px;
             flex-shrink: 0;
-        }}
-        
-        .activity-content {{
-            flex: 1;
         }}
         
         .activity-type {{
             font-weight: 600;
-            font-size: 0.9rem;
-            color: var(--text-primary);
+            color: var(--text);
+            min-width: 100px;
         }}
         
         .activity-repo {{
-            font-size: 0.85rem;
-            color: var(--text-muted);
+            color: var(--cyan);
+            flex: 1;
+            font-size: 0.78rem;
         }}
         
         .activity-date {{
-            font-size: 0.8rem;
-            color: var(--text-muted);
+            color: var(--text-dim);
+            font-size: 0.72rem;
+        }}
+        
+        /* ═══ Typing Cursor ═══ */
+        .cursor {{
+            display: inline-block;
+            width: 10px;
+            height: 1.2em;
+            background: var(--green);
+            margin-left: 4px;
+            animation: blink 1s step-end infinite;
+            vertical-align: text-bottom;
+        }}
+        
+        @keyframes blink {{
+            0%, 100% {{ opacity: 1; }}
+            50% {{ opacity: 0; }}
         }}
         
         /* ═══ Footer ═══ */
         .footer {{
             padding: 40px 0;
+            border-top: 1px solid var(--border);
             text-align: center;
-            border-top: 1px solid var(--border-light);
-            margin-top: 40px;
         }}
         
         .footer-text {{
-            font-size: 0.85rem;
-            color: var(--text-muted);
+            font-size: 0.72rem;
+            color: var(--text-dim);
         }}
         
-        .footer-link {{
-            color: var(--accent);
+        .footer-text a {{
+            color: var(--green);
             text-decoration: none;
         }}
         
-        .footer-link:hover {{
-            text-decoration: underline;
+        .footer-text a:hover {{ text-decoration: underline; }}
+        
+        /* ═══ Scroll Animations ═══ */
+        .reveal {{
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
         }}
         
-        /* ═══ Animations ═══ */
-        @keyframes fadeIn {{
-            from {{ opacity: 0; transform: translateY(20px); }}
-            to {{ opacity: 1; transform: translateY(0); }}
-        }}
-        
-        .animate-in {{
-            animation: fadeIn 0.6s ease forwards;
+        .reveal.visible {{
+            opacity: 1;
+            transform: translateY(0);
         }}
         
         /* ═══ Responsive ═══ */
         @media (max-width: 768px) {{
-            .hero {{
-                padding: 50px 0 40px;
-            }}
-            
-            .hero-name {{
-                font-size: 1.8rem;
-            }}
-            
-            .avatar {{
-                width: 100px;
-                height: 100px;
-            }}
-            
-            .repo-grid {{
-                grid-template-columns: 1fr;
-            }}
-            
-            .stats {{
-                gap: 20px;
-            }}
-            
-            .stat-value {{
-                font-size: 1.4rem;
-            }}
+            .hero {{ padding: 100px 0 60px; }}
+            .hero-grid {{ grid-template-columns: 1fr; text-align: center; }}
+            .avatar-frame {{ margin: 0 auto; width: 120px; height: 120px; }}
+            .avatar {{ width: 120px; height: 120px; }}
+            .hero-name {{ font-size: 2rem; }}
+            .social-row {{ justify-content: center; }}
+            .stats-row {{ justify-content: center; }}
+            .repo-grid {{ grid-template-columns: 1fr; }}
+            .nav-links {{ display: none; }}
+            .activity-type {{ min-width: auto; }}
         }}
+        
+        /* ═══ Selection ═══ */
+        ::selection {{
+            background: var(--green);
+            color: var(--bg);
+        }}
+        
+        /* ═══ Scrollbar ═══ */
+        ::-webkit-scrollbar {{ width: 6px; }}
+        ::-webkit-scrollbar-track {{ background: var(--bg); }}
+        ::-webkit-scrollbar-thumb {{ background: var(--border); border-radius: 3px; }}
+        ::-webkit-scrollbar-thumb:hover {{ background: var(--green); }}
     </style>
 </head>
 <body>
-    <!-- ═══ Hero ═══ -->
-    <section class="hero">
+    <!-- Matrix Rain Canvas -->
+    <canvas id="matrix"></canvas>
+    
+    <!-- Navigation -->
+    <nav>
+        <a href="#" class="nav-logo">{username}</a>
+        <ul class="nav-links">
+            <li><a href="#about">about</a></li>
+            <li><a href="#stack">stack</a></li>
+            <li><a href="#projects">projects</a></li>
+            <li><a href="#activity">activity</a></li>
+        </ul>
+    </nav>
+    
+    <!-- Hero -->
+    <section class="hero" id="about">
         <div class="container">
-            <img src="{avatar}" alt="{name}" class="avatar animate-in">
-            <h1 class="hero-name animate-in">{name}</h1>
-            <p class="hero-username animate-in">@{username}</p>
-            <p class="hero-bio animate-in">{bio}</p>
-            
-            <div class="hero-info animate-in">
-                {info_html}
-            </div>
-            
-            <div class="social-links animate-in">
-                {social_links}
-            </div>
-            
-            <div class="stats animate-in">
-                <div class="stat">
-                    <div class="stat-value">{public_repos}</div>
-                    <div class="stat-label">Repositories</div>
+            <div class="hero-grid">
+                <div class="avatar-frame">
+                    <img src="{avatar}" alt="{name}" class="avatar">
                 </div>
-                <div class="stat">
-                    <div class="stat-value">{total_stars}</div>
-                    <div class="stat-label">Stars</div>
-                </div>
-                <div class="stat">
-                    <div class="stat-value">{followers}</div>
-                    <div class="stat-label">Followers</div>
-                </div>
-                <div class="stat">
-                    <div class="stat-value">{following}</div>
-                    <div class="stat-label">Following</div>
+                <div class="hero-content">
+                    <p class="terminal-line">whoami</p>
+                    <h1 class="hero-name" data-text="{name}">{name}</h1>
+                    <p class="hero-handle">@{username}<span class="cursor"></span></p>
+                    <p class="hero-bio">{bio}</p>
+                    <p class="hero-info">{info_text}</p>
+                    <div class="social-row">
+                        {social_links}
+                    </div>
+                    <div class="stats-row">
+                        <div class="stat">
+                            <div class="stat-val">{public_repos}</div>
+                            <div class="stat-label">repos</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-val">{total_stars}</div>
+                            <div class="stat-label">stars</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-val">{followers}</div>
+                            <div class="stat-label">followers</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-val">{following}</div>
+                            <div class="stat-label">following</div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </section>
     
-    <!-- ═══ Languages ═══ -->
-    <section class="section">
+    <!-- Languages -->
+    <section class="section" id="stack">
         <div class="container">
-            <h2 class="section-title">Tech Stack</h2>
-            <p class="section-subtitle">Languages used across repositories</p>
+            <div class="section-header">
+                <h2 class="section-title">tech stack</h2>
+                <div class="section-line"></div>
+            </div>
+            <p class="section-subtitle">// languages used across repositories</p>
             
             {lang_bar}
             
-            <div class="lang-list">
+            <div class="lang-grid">
                 {lang_list}
             </div>
         </div>
     </section>
     
-    <!-- ═══ Repositories ═══ -->
-    <section class="section">
+    <!-- Repositories -->
+    <section class="section" id="projects">
         <div class="container">
-            <h2 class="section-title">Featured Projects</h2>
-            <p class="section-subtitle">Top repositories by stars</p>
+            <div class="section-header">
+                <h2 class="section-title">projects</h2>
+                <div class="section-line"></div>
+            </div>
+            <p class="section-subtitle">// top repositories by stars</p>
             
             <div class="repo-grid">
                 {repo_cards}
@@ -635,11 +814,14 @@ class TemplateEngine:
         </div>
     </section>
     
-    <!-- ═══ Activity ═══ -->
-    <section class="section">
+    <!-- Activity -->
+    <section class="section" id="activity">
         <div class="container">
-            <h2 class="section-title">Recent Activity</h2>
-            <p class="section-subtitle">Latest public contributions</p>
+            <div class="section-header">
+                <h2 class="section-title">activity</h2>
+                <div class="section-line"></div>
+            </div>
+            <p class="section-subtitle">// recent public contributions</p>
             
             <div class="activity-list">
                 {activity_html}
@@ -647,71 +829,138 @@ class TemplateEngine:
         </div>
     </section>
     
-    <!-- ═══ Footer ═══ -->
+    <!-- Footer -->
     <footer class="footer">
         <div class="container">
             <p class="footer-text">
-                Generated with ❤️ by <a href="https://github.com/Fatkhl/gh-portfolio-gen" class="footer-link">GH Portfolio Generator</a>
-                · Updated {data.get('generated_at', '')}
+                generated by <a href="https://github.com/Fatkhl/gh-portfolio-gen">gh-portfolio-gen</a>
+                // {data.get('generated_at', '')}
             </p>
         </div>
     </footer>
     
-    <!-- ═══ Scripts ═══ -->
     <script>
-        // Intersection Observer for scroll animations
+        // ═══ Matrix Rain ═══
+        const canvas = document.getElementById('matrix');
+        const ctx = canvas.getContext('2d');
+        
+        function resizeCanvas() {{
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }}
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+        
+        const chars = 'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ<>{{}}[]|/\\';
+        const fontSize = 14;
+        const columns = Math.floor(canvas.width / fontSize);
+        const drops = Array(columns).fill(1);
+        
+        function drawMatrix() {{
+            ctx.fillStyle = 'rgba(10, 10, 10, 0.05)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#00ff41';
+            ctx.font = fontSize + 'px JetBrains Mono';
+            
+            for (let i = 0; i < drops.length; i++) {{
+                const char = chars[Math.floor(Math.random() * chars.length)];
+                ctx.fillText(char, i * fontSize, drops[i] * fontSize);
+                
+                if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {{
+                    drops[i] = 0;
+                }}
+                drops[i]++;
+            }}
+        }}
+        setInterval(drawMatrix, 50);
+        
+        // ═══ Scroll Reveal ═══
         const observer = new IntersectionObserver((entries) => {{
             entries.forEach(entry => {{
                 if (entry.isIntersecting) {{
-                    entry.target.style.opacity = '1';
-                    entry.target.style.transform = 'translateY(0)';
+                    entry.target.classList.add('visible');
                 }}
             }});
         }}, {{ threshold: 0.1 }});
         
-        document.querySelectorAll('.repo-card, .activity-item, .lang-item').forEach(el => {{
-            el.style.opacity = '0';
-            el.style.transform = 'translateY(20px)';
-            el.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+        document.querySelectorAll('.repo-card, .activity-row, .lang-item, .section').forEach(el => {{
+            el.classList.add('reveal');
             observer.observe(el);
+        }});
+        
+        // ═══ Typing Effect on Bio ═══
+        // (cursor blink is CSS-only, no JS needed for static text)
+        
+        // ═══ Nav active state ═══
+        const sections = document.querySelectorAll('section[id]');
+        window.addEventListener('scroll', () => {{
+            const scrollY = window.scrollY + 100;
+            sections.forEach(section => {{
+                const top = section.offsetTop;
+                const height = section.offsetHeight;
+                const id = section.getAttribute('id');
+                const link = document.querySelector(`.nav-links a[href="#${{id}}"]`);
+                if (link) {{
+                    if (scrollY >= top && scrollY < top + height) {{
+                        link.style.color = '#00ff41';
+                    }} else {{
+                        link.style.color = '';
+                    }}
+                }}
+            }});
         }});
     </script>
 </body>
-</html>"""
+</html>'''
         
         return html
     
+    def _split_bio(self, bio: str) -> list:
+        """Split bio into terminal-style lines."""
+        if not bio:
+            return [""]
+        # Split into max 2 lines
+        words = bio.split()
+        mid = len(words) // 2
+        line1 = " ".join(words[:mid])
+        line2 = " ".join(words[mid:])
+        return [line1, line2] if line2 else [bio]
+    
     def _build_repo_cards(self, repos: list) -> str:
-        """Build HTML for repository cards."""
+        """Build repo cards HTML."""
         cards = []
         lang_colors = {
             "JavaScript": "#f1e05a", "TypeScript": "#3178c6", "Python": "#3572A5",
             "Java": "#b07219", "C++": "#f34b7d", "Go": "#00ADD8", "Rust": "#dea584",
             "Ruby": "#701516", "PHP": "#4F5D95", "Shell": "#89e051", "HTML": "#e34c26",
             "CSS": "#563d7c", "Solidity": "#AA6746", "Dart": "#00B4AB",
+            "Vue": "#41b883", "Svelte": "#ff3e00",
         }
         
         for r in repos:
             topics_html = ""
             if r.get("topics"):
-                tags = "".join(f'<span class="topic-tag">{t}</span>' for t in r["topics"][:5])
+                tags = "".join(f'<span class="topic">{t}</span>' for t in r["topics"][:5])
                 topics_html = f'<div class="repo-topics">{tags}</div>'
             
             lang_color = lang_colors.get(r.get("language", ""), "#8b8b8b")
             lang_html = ""
             if r.get("language"):
-                lang_html = f'<span class="repo-meta-item"><span class="repo-lang-dot" style="background:{lang_color}"></span> {r["language"]}</span>'
+                lang_html = f'<span class="meta-item"><span class="lang-indicator" style="background:{lang_color};box-shadow:0 0 6px {lang_color}"></span>{r["language"]}</span>'
             
-            stars_html = f'<span class="repo-meta-item">⭐ {r["stars"]}</span>' if r.get("stars", 0) > 0 else ""
-            forks_html = f'<span class="repo-meta-item">🔀 {r["forks"]}</span>' if r.get("forks", 0) > 0 else ""
+            stars_html = f'<span class="meta-item">★ {r["stars"]}</span>' if r.get("stars", 0) > 0 else ""
+            forks_html = f'<span class="meta-item">⑂ {r["forks"]}</span>' if r.get("forks", 0) > 0 else ""
             
-            desc = r.get("description", "") or "No description"
+            desc = r.get("description", "") or "no description"
             
             cards.append(f'''
                 <a href="{r['url']}" target="_blank" class="repo-card">
-                    <div class="repo-name">{r['name']}</div>
+                    <div class="repo-name-row">
+                        <span class="repo-icon">◆</span>
+                        <span class="repo-name">{r['name']}</span>
+                    </div>
                     {topics_html}
-                    <div class="repo-desc">{desc}</div>
+                    <p class="repo-desc">{desc}</p>
                     <div class="repo-meta">
                         {lang_html}
                         {stars_html}
@@ -722,57 +971,55 @@ class TemplateEngine:
         return "\n".join(cards)
     
     def _build_language_bar(self, languages: list) -> str:
-        """Build the language progress bar."""
+        """Build language progress bar."""
         if not languages:
             return ""
         
         segments = []
         for lang in languages[:8]:
             segments.append(
-                f'<div class="lang-bar-segment" style="width:{lang["percentage"]}%;background:{lang["color"]}" title="{lang["name"]}: {lang["percentage"]}%"></div>'
+                f'<div class="lang-segment" style="width:{lang["percentage"]}%;background:{lang["color"]};box-shadow:0 0 8px {lang["color"]}40" title="{lang["name"]}: {lang["percentage"]}%"></div>'
             )
         
         return f'<div class="lang-bar">{"".join(segments)}</div>'
     
     def _build_language_list(self, languages: list) -> str:
-        """Build the language list below the bar."""
+        """Build language list."""
         items = []
         for lang in languages[:12]:
             items.append(f'''
                 <div class="lang-item">
-                    <span class="lang-dot" style="background:{lang['color']}"></span>
+                    <span class="lang-dot" style="background:{lang['color']};color:{lang['color']}"></span>
                     <span class="lang-name">{lang['name']}</span>
-                    <span class="lang-percent">{lang['percentage']}%</span>
+                    <span class="lang-pct">{lang['percentage']}%</span>
                 </div>''')
         
         return "\n".join(items)
     
     def _build_activity(self, activities: list) -> str:
-        """Build recent activity list."""
+        """Build activity list."""
         if not activities:
-            return '<p style="color:var(--text-muted)">No recent public activity</p>'
+            return '<p style="color:var(--text-dim)">// no recent public activity</p>'
         
         icons = {
-            "Push": "📤", "Create": "✨", "Delete": "🗑️", "Fork": "🔀",
-            "Issues": "🐛", "PullRequest": "🔀", "Watch": "⭐", "Release": "📦",
-            "Public": "🌍", "Member": "👤", "Gollum": "📝",
+            "Push": "→", "Create": "+", "Delete": "×", "Fork": "⑂",
+            "Issues": "!", "PullRequest": "⇐", "Watch": "★", "Release": "📦",
+            "Public": "⊙", "Member": "☺", "Gollum": "✎",
         }
         
         items = []
         for a in activities:
             event_type = a.get("type", "Event")
-            icon = icons.get(event_type, "📌")
+            icon = icons.get(event_type, "•")
             repo = a.get("repo", "")
             date = a.get("date", "")
             
             items.append(f'''
-                <div class="activity-item">
+                <div class="activity-row">
                     <div class="activity-icon">{icon}</div>
-                    <div class="activity-content">
-                        <div class="activity-type">{event_type}</div>
-                        <div class="activity-repo">{repo}</div>
-                    </div>
-                    <div class="activity-date">{date}</div>
+                    <span class="activity-type">{event_type}</span>
+                    <span class="activity-repo">{repo}</span>
+                    <span class="activity-date">{date}</span>
                 </div>''')
         
         return "\n".join(items)
