@@ -1,6 +1,7 @@
 """
-Template Engine — Hacker Theme Edition
-Generates portfolio HTML with hacker/terminal aesthetic.
+Template Engine — Hacker 3D Edition
+Matrix rain + running terminal + 3D tilt cards
+No f-strings for HTML — uses .replace() to avoid brace conflicts with JS.
 """
 
 import os
@@ -10,1016 +11,756 @@ from pathlib import Path
 
 
 class TemplateEngine:
-    """Generate hacker-themed portfolio from data."""
-    
     def __init__(self, theme: str = "hacker"):
         self.theme = theme
-        self.template_dir = Path(__file__).parent.parent / "templates"
-        self.static_dir = Path(__file__).parent.parent / "static"
-    
+
     def generate(self, data: dict, output_path: Path):
-        """Generate the complete portfolio site."""
         output_path.mkdir(parents=True, exist_ok=True)
-        self._copy_static(output_path)
         html = self._render_index(data)
         (output_path / "index.html").write_text(html, encoding="utf-8")
         (output_path / ".nojekyll").touch()
-    
-    def _copy_static(self, output_path: Path):
-        """Copy static assets."""
-        static_out = output_path / "static"
-        if static_out.exists():
-            shutil.rmtree(static_out)
-        if self.static_dir.exists():
-            shutil.copytree(self.static_dir, static_out)
-    
+
     def _render_index(self, data: dict) -> str:
-        profile = data["profile"]
+        p = data["profile"]
         repos = data["repos"]
-        languages = data["languages"]
-        contributions = data["contributions"]
-        
-        repo_cards = self._build_repo_cards(repos[:12])
-        lang_bar = self._build_language_bar(languages)
-        lang_list = self._build_language_list(languages)
-        activity_html = self._build_activity(contributions.get("recent_activity", []))
-        
-        name = profile.get("name", profile.get("username", ""))
-        username = profile.get("username", "")
-        bio = profile.get("bio", "") or "Developer"
-        avatar = profile.get("avatar_url", "")
-        location = profile.get("location", "") or ""
-        company = profile.get("company", "") or ""
-        blog = profile.get("blog", "") or ""
-        twitter = profile.get("twitter", "") or ""
-        github_url = profile.get("github_url", "")
-        followers = profile.get("followers", 0)
-        following = profile.get("following", 0)
-        public_repos = profile.get("public_repos", 0)
+        langs = data["languages"]
+        contrib = data["contributions"]
+
+        name = p.get("name", p.get("username", ""))
+        user = p.get("username", "")
+        bio = p.get("bio", "") or "Developer"
+        avatar = p.get("avatar_url", "")
+        loc = p.get("location", "") or ""
+        comp = p.get("company", "") or ""
+        blog = p.get("blog", "") or ""
+        tw = p.get("twitter", "") or ""
+        gh_url = p.get("github_url", "")
+        followers = p.get("followers", 0)
+        following = p.get("following", 0)
+        repos_count = p.get("public_repos", 0)
         total_stars = sum(r.get("stars", 0) for r in repos)
-        
-        # Social links
-        social_links = f'<a href="{github_url}" target="_blank" class="glitch-link">github</a>'
+        generated_at = data.get("generated_at", "")
+
+        # Social buttons
+        social = '<a href="' + gh_url + '" target="_blank" class="btn">github</a>'
         if blog:
-            social_links += f'\n        <a href="{blog}" target="_blank" class="glitch-link">website</a>'
-        if twitter:
-            social_links += f'\n        <a href="https://twitter.com/{twitter}" target="_blank" class="glitch-link">twitter</a>'
-        
-        # Info line
+            social += '<a href="' + blog + '" target="_blank" class="btn">website</a>'
+        if tw:
+            social += '<a href="https://twitter.com/' + tw + '" target="_blank" class="btn">twitter</a>'
+
+        # Info
         info_parts = []
-        if company:
-            info_parts.append(f'@ {company}')
-        if location:
-            info_parts.append(f'📍 {location}')
-        info_text = " │ ".join(info_parts) if info_parts else ""
-        
-        # Terminal bio lines
-        bio_lines = self._split_bio(bio)
-        
-        html = f'''<!DOCTYPE html>
+        if comp:
+            info_parts.append(comp)
+        if loc:
+            info_parts.append(loc)
+        info = " // ".join(info_parts)
+
+        # Components
+        repo_html = self._repos(repos[:12])
+        lang_bar = self._lang_bar(langs)
+        lang_items = self._lang_list(langs)
+        activity = self._activity(contrib.get("recent_activity", []))
+
+        # Build HTML using template + replace
+        html = self._HTML_TEMPLATE
+        html = html.replace("{{NAME}}", name)
+        html = html.replace("{{USER}}", user)
+        html = html.replace("{{BIO}}", bio)
+        html = html.replace("{{AVATAR}}", avatar)
+        html = html.replace("{{INFO}}", info)
+        html = html.replace("{{GH_URL}}", gh_url)
+        html = html.replace("{{SOCIAL}}", social)
+        html = html.replace("{{REPOS_COUNT}}", str(repos_count))
+        html = html.replace("{{TOTAL_STARS}}", str(total_stars))
+        html = html.replace("{{FOLLOWERS}}", str(followers))
+        html = html.replace("{{FOLLOWING}}", str(following))
+        html = html.replace("{{REPO_HTML}}", repo_html)
+        html = html.replace("{{LANG_BAR}}", lang_bar)
+        html = html.replace("{{LANG_ITEMS}}", lang_items)
+        html = html.replace("{{ACTIVITY}}", activity)
+        html = html.replace("{{GENERATED_AT}}", generated_at)
+        return html
+
+    # ═══════════════════════════════════════════════════════════
+    # HTML TEMPLATE — uses {{VAR}} placeholders (NOT f-string)
+    # ═══════════════════════════════════════════════════════════
+    _HTML_TEMPLATE = r'''<!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{name} // developer</title>
-    <meta name="description" content="{name} — {bio}">
-    <meta name="theme-color" content="#0a0a0a">
-    <meta property="og:title" content="{name} // developer">
-    <meta property="og:description" content="{bio}">
-    <meta property="og:image" content="{avatar}">
-    
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
-    
-    <style>
-        /* ═══════════════════════════════════════════════════
-           HACKER THEME — Terminal Aesthetic
-           ═══════════════════════════════════════════════════ */
-        :root {{
-            --bg: #0a0a0a;
-            --bg-card: #111111;
-            --bg-card-hover: #1a1a1a;
-            --border: #1e1e1e;
-            --border-glow: #00ff4120;
-            --text: #c8c8c8;
-            --text-dim: #666666;
-            --text-bright: #ffffff;
-            --green: #00ff41;
-            --green-dim: #00ff4140;
-            --green-glow: 0 0 20px #00ff4140, 0 0 40px #00ff4115;
-            --cyan: #00d4ff;
-            --cyan-dim: #00d4ff40;
-            --amber: #ffb000;
-            --red: #ff3333;
-            --purple: #b967ff;
-            --mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
-            --sans: 'Inter', -apple-system, sans-serif;
-        }}
-        
-        *, *::before, *::after {{ margin: 0; padding: 0; box-sizing: border-box; }}
-        
-        html {{ scroll-behavior: smooth; }}
-        
-        body {{
-            font-family: var(--mono);
-            background: var(--bg);
-            color: var(--text);
-            line-height: 1.7;
-            min-height: 100vh;
-            overflow-x: hidden;
-        }}
-        
-        /* ═══ Matrix Canvas ═══ */
-        #matrix {{
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 0;
-            opacity: 0.07;
-            pointer-events: none;
-        }}
-        
-        /* ═══ Scanlines ═══ */
-        body::after {{
-            content: '';
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: repeating-linear-gradient(
-                0deg,
-                transparent,
-                transparent 2px,
-                rgba(0, 255, 65, 0.01) 2px,
-                rgba(0, 255, 65, 0.01) 4px
-            );
-            pointer-events: none;
-            z-index: 999;
-        }}
-        
-        /* ═══ Container ═══ */
-        .container {{
-            max-width: 1000px;
-            margin: 0 auto;
-            padding: 0 24px;
-            position: relative;
-            z-index: 1;
-        }}
-        
-        /* ═══ Navigation ═══ */
-        nav {{
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            z-index: 100;
-            padding: 12px 24px;
-            background: rgba(10, 10, 10, 0.9);
-            backdrop-filter: blur(20px);
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }}
-        
-        .nav-logo {{
-            font-family: var(--mono);
-            font-size: 0.85rem;
-            color: var(--green);
-            text-decoration: none;
-            font-weight: 600;
-        }}
-        
-        .nav-logo::before {{ content: '> '; color: var(--text-dim); }}
-        
-        .nav-links {{
-            display: flex;
-            gap: 24px;
-            list-style: none;
-        }}
-        
-        .nav-links a {{
-            color: var(--text-dim);
-            text-decoration: none;
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-            transition: color 0.3s;
-        }}
-        
-        .nav-links a:hover {{ color: var(--green); }}
-        
-        /* ═══ Hero ═══ */
-        .hero {{
-            padding: 140px 0 80px;
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-        }}
-        
-        .hero-grid {{
-            display: grid;
-            grid-template-columns: auto 1fr;
-            gap: 48px;
-            align-items: center;
-        }}
-        
-        .avatar-frame {{
-            position: relative;
-            width: 180px;
-            height: 180px;
-        }}
-        
-        .avatar-frame::before {{
-            content: '';
-            position: absolute;
-            inset: -4px;
-            border: 2px solid var(--green);
-            border-radius: 4px;
-            animation: pulse-border 3s ease-in-out infinite;
-        }}
-        
-        .avatar-frame::after {{
-            content: '';
-            position: absolute;
-            inset: -8px;
-            border: 1px solid var(--green-dim);
-            border-radius: 6px;
-        }}
-        
-        @keyframes pulse-border {{
-            0%, 100% {{ opacity: 1; box-shadow: var(--green-glow); }}
-            50% {{ opacity: 0.5; box-shadow: none; }}
-        }}
-        
-        .avatar {{
-            width: 180px;
-            height: 180px;
-            border-radius: 4px;
-            object-fit: cover;
-            filter: grayscale(20%) contrast(1.1);
-            transition: all 0.4s;
-        }}
-        
-        .avatar:hover {{
-            filter: grayscale(0%) contrast(1.05);
-            box-shadow: var(--green-glow);
-        }}
-        
-        .hero-content {{ max-width: 600px; }}
-        
-        .terminal-line {{
-            font-size: 0.75rem;
-            color: var(--text-dim);
-            margin-bottom: 8px;
-        }}
-        
-        .terminal-line::before {{
-            content: '$ ';
-            color: var(--green);
-        }}
-        
-        .hero-name {{
-            font-family: var(--mono);
-            font-size: 3rem;
-            font-weight: 700;
-            color: var(--text-bright);
-            margin-bottom: 4px;
-            position: relative;
-            display: inline-block;
-        }}
-        
-        /* Glitch effect */
-        .hero-name::before,
-        .hero-name::after {{
-            content: attr(data-text);
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-        }}
-        
-        .hero-name::before {{
-            color: var(--cyan);
-            z-index: -1;
-            animation: glitch-1 3s infinite;
-        }}
-        
-        .hero-name::after {{
-            color: var(--red);
-            z-index: -2;
-            animation: glitch-2 3s infinite;
-        }}
-        
-        @keyframes glitch-1 {{
-            0%, 90%, 100% {{ clip-path: inset(0 0 0 0); transform: translate(0); }}
-            92% {{ clip-path: inset(20% 0 60% 0); transform: translate(-3px, 1px); }}
-            94% {{ clip-path: inset(50% 0 20% 0); transform: translate(3px, -1px); }}
-            96% {{ clip-path: inset(10% 0 70% 0); transform: translate(-2px, 2px); }}
-            98% {{ clip-path: inset(80% 0 5% 0); transform: translate(2px, -2px); }}
-        }}
-        
-        @keyframes glitch-2 {{
-            0%, 90%, 100% {{ clip-path: inset(0 0 0 0); transform: translate(0); }}
-            91% {{ clip-path: inset(60% 0 10% 0); transform: translate(2px, 2px); }}
-            93% {{ clip-path: inset(30% 0 40% 0); transform: translate(-2px, -1px); }}
-            95% {{ clip-path: inset(70% 0 15% 0); transform: translate(1px, 1px); }}
-            97% {{ clip-path: inset(5% 0 80% 0); transform: translate(-1px, -2px); }}
-        }}
-        
-        .hero-handle {{
-            font-size: 1rem;
-            color: var(--green);
-            margin-bottom: 20px;
-            opacity: 0.8;
-        }}
-        
-        .hero-bio {{
-            font-family: var(--sans);
-            font-size: 1rem;
-            color: var(--text);
-            line-height: 1.8;
-            margin-bottom: 24px;
-        }}
-        
-        .hero-info {{
-            font-size: 0.8rem;
-            color: var(--text-dim);
-            margin-bottom: 28px;
-        }}
-        
-        .social-row {{
-            display: flex;
-            gap: 16px;
-            flex-wrap: wrap;
-            margin-bottom: 36px;
-        }}
-        
-        .glitch-link {{
-            font-family: var(--mono);
-            font-size: 0.8rem;
-            color: var(--text-dim);
-            text-decoration: none;
-            padding: 8px 16px;
-            border: 1px solid var(--border);
-            border-radius: 2px;
-            transition: all 0.3s;
-            position: relative;
-            text-transform: lowercase;
-        }}
-        
-        .glitch-link::before {{ content: '[ '; color: var(--green); opacity: 0; transition: opacity 0.3s; }}
-        .glitch-link::after {{ content: ' ]'; color: var(--green); opacity: 0; transition: opacity 0.3s; }}
-        
-        .glitch-link:hover {{
-            color: var(--green);
-            border-color: var(--green);
-            box-shadow: var(--green-glow);
-        }}
-        
-        .glitch-link:hover::before,
-        .glitch-link:hover::after {{ opacity: 1; }}
-        
-        /* ═══ Stats ═══ */
-        .stats-row {{
-            display: flex;
-            gap: 32px;
-        }}
-        
-        .stat {{
-            text-align: left;
-        }}
-        
-        .stat-val {{
-            font-size: 1.6rem;
-            font-weight: 700;
-            color: var(--green);
-            line-height: 1;
-        }}
-        
-        .stat-label {{
-            font-size: 0.65rem;
-            color: var(--text-dim);
-            text-transform: uppercase;
-            letter-spacing: 0.15em;
-            margin-top: 4px;
-        }}
-        
-        /* ═══ Section ═══ */
-        .section {{
-            padding: 80px 0;
-            border-top: 1px solid var(--border);
-        }}
-        
-        .section-header {{
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 8px;
-        }}
-        
-        .section-title {{
-            font-family: var(--mono);
-            font-size: 1.1rem;
-            font-weight: 600;
-            color: var(--green);
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-        }}
-        
-        .section-title::before {{ content: '# '; color: var(--text-dim); }}
-        
-        .section-line {{
-            flex: 1;
-            height: 1px;
-            background: linear-gradient(90deg, var(--border), transparent);
-        }}
-        
-        .section-subtitle {{
-            font-family: var(--sans);
-            font-size: 0.85rem;
-            color: var(--text-dim);
-            margin-bottom: 40px;
-        }}
-        
-        /* ═══ Language Bar ═══ */
-        .lang-bar {{
-            display: flex;
-            height: 8px;
-            border-radius: 2px;
-            overflow: hidden;
-            margin-bottom: 20px;
-            border: 1px solid var(--border);
-        }}
-        
-        .lang-segment {{
-            height: 100%;
-            transition: all 0.3s;
-            position: relative;
-        }}
-        
-        .lang-segment:hover {{
-            filter: brightness(1.3);
-            box-shadow: 0 0 10px currentColor;
-        }}
-        
-        .lang-grid {{
-            display: flex;
-            flex-wrap: wrap;
-            gap: 20px;
-        }}
-        
-        .lang-item {{
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 0.8rem;
-        }}
-        
-        .lang-dot {{
-            width: 8px;
-            height: 8px;
-            border-radius: 1px;
-            flex-shrink: 0;
-            box-shadow: 0 0 6px currentColor;
-        }}
-        
-        .lang-name {{ color: var(--text); }}
-        .lang-pct {{ color: var(--text-dim); font-size: 0.7rem; }}
-        
-        /* ═══ Repo Grid ═══ */
-        .repo-grid {{
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 16px;
-        }}
-        
-        .repo-card {{
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 4px;
-            padding: 20px;
-            text-decoration: none;
-            color: inherit;
-            transition: all 0.3s;
-            display: flex;
-            flex-direction: column;
-            position: relative;
-            overflow: hidden;
-        }}
-        
-        .repo-card::before {{
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 2px;
-            height: 0;
-            background: var(--green);
-            transition: height 0.3s;
-        }}
-        
-        .repo-card:hover {{
-            border-color: var(--green);
-            background: var(--bg-card-hover);
-            box-shadow: var(--green-glow);
-            transform: translateY(-2px);
-        }}
-        
-        .repo-card:hover::before {{ height: 100%; }}
-        
-        .repo-name-row {{
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 10px;
-        }}
-        
-        .repo-icon {{
-            color: var(--amber);
-            font-size: 0.9rem;
-        }}
-        
-        .repo-name {{
-            font-family: var(--mono);
-            font-size: 0.95rem;
-            font-weight: 600;
-            color: var(--cyan);
-        }}
-        
-        .repo-desc {{
-            font-family: var(--sans);
-            font-size: 0.82rem;
-            color: var(--text-dim);
-            margin-bottom: 14px;
-            flex: 1;
-            line-height: 1.6;
-            display: -webkit-box;
-            -webkit-line-clamp: 3;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-        }}
-        
-        .repo-topics {{
-            display: flex;
-            flex-wrap: wrap;
-            gap: 6px;
-            margin-bottom: 10px;
-        }}
-        
-        .topic {{
-            padding: 2px 8px;
-            background: var(--green-dim);
-            color: var(--green);
-            border-radius: 2px;
-            font-size: 0.65rem;
-            font-weight: 500;
-            text-transform: lowercase;
-        }}
-        
-        .repo-meta {{
-            display: flex;
-            gap: 14px;
-            font-size: 0.72rem;
-            color: var(--text-dim);
-        }}
-        
-        .meta-item {{
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }}
-        
-        .lang-indicator {{
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
-            display: inline-block;
-        }}
-        
-        /* ═══ Activity ═══ */
-        .activity-list {{
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }}
-        
-        .activity-row {{
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            padding: 12px 16px;
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 2px;
-            transition: all 0.3s;
-            font-size: 0.82rem;
-        }}
-        
-        .activity-row:hover {{
-            border-color: var(--green);
-        }}
-        
-        .activity-icon {{
-            width: 28px;
-            height: 28px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.85rem;
-            background: var(--green-dim);
-            border-radius: 2px;
-            flex-shrink: 0;
-        }}
-        
-        .activity-type {{
-            font-weight: 600;
-            color: var(--text);
-            min-width: 100px;
-        }}
-        
-        .activity-repo {{
-            color: var(--cyan);
-            flex: 1;
-            font-size: 0.78rem;
-        }}
-        
-        .activity-date {{
-            color: var(--text-dim);
-            font-size: 0.72rem;
-        }}
-        
-        /* ═══ Typing Cursor ═══ */
-        .cursor {{
-            display: inline-block;
-            width: 10px;
-            height: 1.2em;
-            background: var(--green);
-            margin-left: 4px;
-            animation: blink 1s step-end infinite;
-            vertical-align: text-bottom;
-        }}
-        
-        @keyframes blink {{
-            0%, 100% {{ opacity: 1; }}
-            50% {{ opacity: 0; }}
-        }}
-        
-        /* ═══ Footer ═══ */
-        .footer {{
-            padding: 40px 0;
-            border-top: 1px solid var(--border);
-            text-align: center;
-        }}
-        
-        .footer-text {{
-            font-size: 0.72rem;
-            color: var(--text-dim);
-        }}
-        
-        .footer-text a {{
-            color: var(--green);
-            text-decoration: none;
-        }}
-        
-        .footer-text a:hover {{ text-decoration: underline; }}
-        
-        /* ═══ Scroll Animations ═══ */
-        .reveal {{
-            opacity: 0;
-            transform: translateY(20px);
-            transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-        }}
-        
-        .reveal.visible {{
-            opacity: 1;
-            transform: translateY(0);
-        }}
-        
-        /* ═══ Responsive ═══ */
-        @media (max-width: 768px) {{
-            .hero {{ padding: 100px 0 60px; }}
-            .hero-grid {{ grid-template-columns: 1fr; text-align: center; }}
-            .avatar-frame {{ margin: 0 auto; width: 120px; height: 120px; }}
-            .avatar {{ width: 120px; height: 120px; }}
-            .hero-name {{ font-size: 2rem; }}
-            .social-row {{ justify-content: center; }}
-            .stats-row {{ justify-content: center; }}
-            .repo-grid {{ grid-template-columns: 1fr; }}
-            .nav-links {{ display: none; }}
-            .activity-type {{ min-width: auto; }}
-        }}
-        
-        /* ═══ Selection ═══ */
-        ::selection {{
-            background: var(--green);
-            color: var(--bg);
-        }}
-        
-        /* ═══ Scrollbar ═══ */
-        ::-webkit-scrollbar {{ width: 6px; }}
-        ::-webkit-scrollbar-track {{ background: var(--bg); }}
-        ::-webkit-scrollbar-thumb {{ background: var(--border); border-radius: 3px; }}
-        ::-webkit-scrollbar-thumb:hover {{ background: var(--green); }}
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{NAME}} // hacker portfolio</title>
+<meta name="description" content="{{NAME}} — {{BIO}}">
+<meta name="theme-color" content="#000">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+    --bg: #000000;
+    --bg2: #0a0a0a;
+    --card: #0d0d0d;
+    --card-hover: #111111;
+    --border: #1a1a1a;
+    --green: #00ff41;
+    --green2: #00cc33;
+    --green-dim: rgba(0,255,65,0.08);
+    --green-glow: 0 0 15px rgba(0,255,65,0.18), 0 0 30px rgba(0,255,65,0.06);
+    --cyan: #00e5ff;
+    --amber: #ffab00;
+    --red: #ff1744;
+    --text: #b0b0b0;
+    --text-bright: #e0e0e0;
+    --text-dim: #555;
+    --mono: 'JetBrains Mono', monospace;
+    --sans: 'Inter', sans-serif;
+}
+
+*,*::before,*::after { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior:smooth; }
+
+body {
+    font-family: var(--mono);
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    overflow-x: hidden;
+    min-height: 100vh;
+}
+
+/* ═══ MATRIX RAIN ═══ */
+#matrix {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: 0;
+    pointer-events: none;
+}
+
+/* ═══ RUNNING TERMINAL ═══ */
+#running-terminal {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: 1;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.tline {
+    position: absolute;
+    font-family: var(--mono);
+    font-size: 11px;
+    line-height: 1.5;
+    white-space: nowrap;
+    opacity: 0;
+    animation: tFloat linear forwards;
+    pointer-events: none;
+}
+.tline .p { color: var(--cyan); }
+.tline .c { color: var(--green); text-shadow: 0 0 6px rgba(0,255,65,0.3); }
+.tline .o { color: #2a7a2a; }
+.tline .ok { color: var(--green); font-weight: 600; }
+
+@keyframes tFloat {
+    0% { opacity: 0; transform: translateY(30px); }
+    8% { opacity: 0.55; }
+    92% { opacity: 0.55; }
+    100% { opacity: 0; transform: translateY(-30px); }
+}
+
+/* ═══ SCANLINES ═══ */
+body::after {
+    content: '';
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: repeating-linear-gradient(
+        0deg, transparent, transparent 2px,
+        rgba(0,255,65,0.012) 2px, rgba(0,255,65,0.012) 4px
+    );
+    pointer-events: none;
+    z-index: 998;
+}
+
+/* ═══ CRT VIGNETTE ═══ */
+body::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.7) 100%);
+    pointer-events: none;
+    z-index: 997;
+}
+
+/* ═══ CONTENT ═══ */
+.content { position: relative; z-index: 10; }
+.container { max-width: 1000px; margin: 0 auto; padding: 0 24px; }
+
+/* ═══ NAV ═══ */
+nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    padding: 14px 32px;
+    background: rgba(0,0,0,0.88);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid rgba(0,255,65,0.08);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.nav-logo {
+    font-family: var(--mono);
+    font-size: 0.85rem;
+    color: var(--green);
+    text-decoration: none;
+    font-weight: 700;
+    text-shadow: 0 0 10px rgba(0,255,65,0.3);
+}
+.nav-logo::before { content: '> '; color: var(--cyan); }
+.nav-links { display:flex; gap:28px; list-style:none; }
+.nav-links a {
+    color: var(--text-dim);
+    text-decoration: none;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    transition: all 0.3s;
+    position: relative;
+}
+.nav-links a::after {
+    content: '';
+    position: absolute;
+    bottom: -4px; left: 0;
+    width: 0; height: 1px;
+    background: var(--green);
+    box-shadow: 0 0 6px var(--green);
+    transition: width 0.3s;
+}
+.nav-links a:hover { color: var(--green); }
+.nav-links a:hover::after { width: 100%; }
+
+/* ═══ HERO 3D ═══ */
+.hero {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    padding: 120px 0 80px;
+    perspective: 1200px;
+}
+.hero-inner {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: 56px;
+    align-items: center;
+    transform-style: preserve-3d;
+}
+
+/* 3D Avatar */
+.avatar-3d {
+    width: 200px; height: 200px;
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 0.15s ease-out;
+}
+.avatar-3d::before {
+    content: '';
+    position: absolute;
+    inset: -6px;
+    border: 2px solid var(--green);
+    border-radius: 8px;
+    transform: translateZ(-20px);
+    animation: pulse3d 3s ease-in-out infinite;
+}
+.avatar-3d::after {
+    content: '';
+    position: absolute;
+    inset: -14px;
+    border: 1px solid rgba(0,255,65,0.12);
+    border-radius: 12px;
+    transform: translateZ(-40px);
+    animation: pulse3d 3s ease-in-out infinite 0.5s;
+}
+@keyframes pulse3d {
+    0%,100% { opacity:0.6; box-shadow: var(--green-glow); }
+    50% { opacity:0.2; box-shadow: none; }
+}
+.avatar-img {
+    width: 200px; height: 200px;
+    border-radius: 8px;
+    object-fit: cover;
+    filter: grayscale(15%) contrast(1.1) brightness(0.95);
+    transition: all 0.5s;
+    box-shadow: 0 20px 60px rgba(0,255,65,0.08);
+}
+.avatar-img:hover {
+    filter: grayscale(0%) contrast(1.05) brightness(1);
+    box-shadow: 0 30px 80px rgba(0,255,65,0.15);
+}
+
+/* Hero Text */
+.hero-text { transform-style: preserve-3d; }
+.term-line { font-size:0.75rem; color:var(--text-dim); margin-bottom:6px; }
+.term-line::before { content:'$ '; color:var(--green); }
+.hero-name {
+    font-family: var(--mono);
+    font-size: 3.2rem;
+    font-weight: 700;
+    color: var(--text-bright);
+    margin-bottom: 4px;
+    position: relative;
+    display: inline-block;
+    text-shadow: 0 0 30px rgba(0,255,65,0.12);
+    transform-style: preserve-3d;
+    animation: nameFloat 6s ease-in-out infinite;
+}
+@keyframes nameFloat {
+    0%,100% { transform: translateZ(0); }
+    50% { transform: translateZ(20px); }
+}
+
+/* Glitch */
+.hero-name::before, .hero-name::after {
+    content: attr(data-text);
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+}
+.hero-name::before { color: var(--cyan); z-index: -1; animation: g1 4s infinite; }
+.hero-name::after { color: var(--red); z-index: -2; animation: g2 4s infinite; }
+
+@keyframes g1 {
+    0%,88%,100% { clip-path:inset(0); transform:translate(0); }
+    90% { clip-path:inset(20% 0 60% 0); transform:translate(-4px,2px); }
+    92% { clip-path:inset(50% 0 20% 0); transform:translate(4px,-1px); }
+    94% { clip-path:inset(10% 0 70% 0); transform:translate(-2px,3px); }
+    96% { clip-path:inset(80% 0 5% 0); transform:translate(3px,-2px); }
+}
+@keyframes g2 {
+    0%,88%,100% { clip-path:inset(0); transform:translate(0); }
+    89% { clip-path:inset(60% 0 10% 0); transform:translate(3px,2px); }
+    91% { clip-path:inset(30% 0 40% 0); transform:translate(-3px,-1px); }
+    93% { clip-path:inset(70% 0 15% 0); transform:translate(2px,1px); }
+    95% { clip-path:inset(5% 0 80% 0); transform:translate(-1px,-3px); }
+}
+
+.handle { font-size:1rem; color:var(--green); margin-bottom:20px; text-shadow:0 0 10px rgba(0,255,65,0.3); }
+.cursor { animation: blink 1s step-end infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+.hero-bio { font-family:var(--sans); font-size:0.95rem; color:var(--text); margin-bottom:16px; max-width:500px; line-height:1.8; }
+.hero-info { font-size:0.78rem; color:var(--text-dim); margin-bottom:24px; }
+
+.btn-row { display:flex; gap:12px; flex-wrap:wrap; margin-bottom:32px; }
+.btn {
+    font-family:var(--mono); font-size:0.78rem; color:var(--text-dim);
+    text-decoration:none; padding:8px 18px; border:1px solid var(--border);
+    border-radius:2px; transition:all 0.3s; text-transform:lowercase;
+    position:relative; overflow:hidden;
+}
+.btn::before {
+    content:''; position:absolute; top:0; left:-100%;
+    width:100%; height:100%;
+    background:linear-gradient(90deg, transparent, rgba(0,255,65,0.06), transparent);
+    transition:left 0.5s;
+}
+.btn:hover { color:var(--green); border-color:var(--green); box-shadow:var(--green-glow); transform:translateY(-2px); }
+.btn:hover::before { left:100%; }
+
+.stats { display:flex; gap:36px; }
+.stat-v { font-size:1.8rem; font-weight:700; color:var(--green); line-height:1; text-shadow:0 0 15px rgba(0,255,65,0.2); }
+.stat-l { font-size:0.6rem; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.15em; margin-top:4px; }
+
+/* ═══ SECTIONS ═══ */
+.section { padding:80px 0; border-top:1px solid #0a0a0a; }
+.sec-hdr { display:flex; align-items:center; gap:12px; margin-bottom:8px; }
+.sec-title { font-family:var(--mono); font-size:1rem; font-weight:600; color:var(--green); text-transform:uppercase; letter-spacing:0.12em; text-shadow:0 0 10px rgba(0,255,65,0.12); }
+.sec-title::before { content:'# '; color:var(--text-dim); }
+.sec-line { flex:1; height:1px; background:linear-gradient(90deg,#1a1a1a,transparent); }
+.sec-sub { font-size:0.82rem; color:var(--text-dim); margin-bottom:36px; font-family:var(--sans); }
+
+/* ═══ LANG BAR ═══ */
+.lang-bar { display:flex; height:6px; border-radius:3px; overflow:hidden; margin-bottom:20px; border:1px solid #111; }
+.lang-seg { height:100%; transition:all 0.3s; }
+.lang-seg:hover { filter:brightness(1.4); box-shadow:0 0 12px currentColor; }
+.lang-grid { display:flex; flex-wrap:wrap; gap:18px; }
+.lang-i { display:flex; align-items:center; gap:8px; font-size:0.78rem; }
+.lang-dot { width:8px; height:8px; border-radius:2px; flex-shrink:0; }
+.lang-n { color:var(--text); }
+.lang-p { color:var(--text-dim); font-size:0.68rem; }
+
+/* ═══ 3D REPO CARDS ═══ */
+.repo-grid {
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(300px, 1fr));
+    gap:18px;
+    perspective:1200px;
+}
+.repo-card {
+    background:var(--card); border:1px solid var(--border); border-radius:6px;
+    padding:22px; text-decoration:none; color:inherit;
+    display:flex; flex-direction:column;
+    transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+    transform-style:preserve-3d;
+    position:relative; overflow:hidden; cursor:pointer;
+}
+.repo-card::before {
+    content:''; position:absolute; top:0; left:0;
+    width:3px; height:0; background:var(--green);
+    transition:height 0.4s; box-shadow:0 0 10px var(--green);
+}
+.repo-card::after {
+    content:''; position:absolute; inset:0;
+    background:radial-gradient(circle at var(--mx,50%) var(--my,50%), rgba(0,255,65,0.04) 0%, transparent 60%);
+    opacity:0; transition:opacity 0.3s; pointer-events:none;
+}
+.repo-card:hover {
+    border-color:rgba(0,255,65,0.25); background:var(--card-hover);
+    box-shadow: 0 10px 40px rgba(0,255,65,0.06), 0 0 0 1px rgba(0,255,65,0.08), inset 0 1px 0 rgba(0,255,65,0.03);
+}
+.repo-card:hover::before { height:100%; }
+.repo-card:hover::after { opacity:1; }
+.repo-card.tilted { transform:rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg)) translateZ(10px); }
+
+.repo-name-row { display:flex; align-items:center; gap:8px; margin-bottom:10px; }
+.repo-icon { color:var(--amber); font-size:0.85rem; }
+.repo-name { font-family:var(--mono); font-size:0.92rem; font-weight:600; color:var(--cyan); }
+.repo-desc { font-family:var(--sans); font-size:0.8rem; color:var(--text-dim); margin-bottom:14px; flex:1; line-height:1.6; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; }
+.repo-topics { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px; }
+.topic { padding:2px 8px; background:var(--green-dim); color:var(--green); border-radius:2px; font-size:0.62rem; font-weight:500; }
+.repo-meta { display:flex; gap:14px; font-size:0.72rem; color:var(--text-dim); }
+.meta-i { display:flex; align-items:center; gap:4px; }
+.lang-ind { width:6px; height:6px; border-radius:50%; display:inline-block; }
+
+/* ═══ ACTIVITY ═══ */
+.activity-list { display:flex; flex-direction:column; gap:8px; }
+.act-row { display:flex; align-items:center; gap:14px; padding:12px 16px; background:var(--card); border:1px solid var(--border); border-radius:4px; transition:all 0.3s; font-size:0.8rem; }
+.act-row:hover { border-color:rgba(0,255,65,0.2); }
+.act-icon { width:28px; height:28px; display:flex; align-items:center; justify-content:center; font-size:0.85rem; background:var(--green-dim); border-radius:4px; flex-shrink:0; }
+.act-type { font-weight:600; color:var(--text); min-width:90px; }
+.act-repo { color:var(--cyan); flex:1; font-size:0.76rem; }
+.act-date { color:var(--text-dim); font-size:0.7rem; }
+
+/* ═══ FOOTER ═══ */
+.footer { padding:40px 0; border-top:1px solid #0a0a0a; text-align:center; }
+.footer-t { font-size:0.7rem; color:var(--text-dim); }
+.footer-t a { color:var(--green); text-decoration:none; }
+.footer-t a:hover { text-decoration:underline; }
+
+/* ═══ SCROLL REVEAL ═══ */
+.reveal { opacity:0; transform:translateY(30px) translateZ(-20px); transition:all 0.8s cubic-bezier(0.23,1,0.32,1); }
+.reveal.visible { opacity:1; transform:translateY(0) translateZ(0); }
+
+/* ═══ RESPONSIVE ═══ */
+@media (max-width:768px) {
+    .hero { padding:100px 0 60px; }
+    .hero-inner { grid-template-columns:1fr; text-align:center; gap:32px; }
+    .avatar-3d { width:140px; height:140px; margin:0 auto; }
+    .avatar-img { width:140px; height:140px; }
+    .hero-name { font-size:2rem; }
+    .btn-row { justify-content:center; }
+    .stats { justify-content:center; }
+    .repo-grid { grid-template-columns:1fr; }
+    .nav-links { display:none; }
+}
+
+::selection { background:var(--green); color:#000; }
+::-webkit-scrollbar { width:5px; }
+::-webkit-scrollbar-track { background:#000; }
+::-webkit-scrollbar-thumb { background:#1a1a1a; border-radius:3px; }
+::-webkit-scrollbar-thumb:hover { background:var(--green); }
+</style>
 </head>
 <body>
-    <!-- Matrix Rain Canvas -->
-    <canvas id="matrix"></canvas>
-    
-    <!-- Navigation -->
-    <nav>
-        <a href="#" class="nav-logo">{username}</a>
-        <ul class="nav-links">
-            <li><a href="#about">about</a></li>
-            <li><a href="#stack">stack</a></li>
-            <li><a href="#projects">projects</a></li>
-            <li><a href="#activity">activity</a></li>
-        </ul>
-    </nav>
-    
-    <!-- Hero -->
-    <section class="hero" id="about">
-        <div class="container">
-            <div class="hero-grid">
-                <div class="avatar-frame">
-                    <img src="{avatar}" alt="{name}" class="avatar">
-                </div>
-                <div class="hero-content">
-                    <p class="terminal-line">whoami</p>
-                    <h1 class="hero-name" data-text="{name}">{name}</h1>
-                    <p class="hero-handle">@{username}<span class="cursor"></span></p>
-                    <p class="hero-bio">{bio}</p>
-                    <p class="hero-info">{info_text}</p>
-                    <div class="social-row">
-                        {social_links}
-                    </div>
-                    <div class="stats-row">
-                        <div class="stat">
-                            <div class="stat-val">{public_repos}</div>
-                            <div class="stat-label">repos</div>
-                        </div>
-                        <div class="stat">
-                            <div class="stat-val">{total_stars}</div>
-                            <div class="stat-label">stars</div>
-                        </div>
-                        <div class="stat">
-                            <div class="stat-val">{followers}</div>
-                            <div class="stat-label">followers</div>
-                        </div>
-                        <div class="stat">
-                            <div class="stat-val">{following}</div>
-                            <div class="stat-label">following</div>
-                        </div>
-                    </div>
-                </div>
+
+<canvas id="matrix"></canvas>
+<div id="running-terminal"></div>
+
+<div class="content">
+<nav>
+    <a href="#" class="nav-logo">{{USER}}</a>
+    <ul class="nav-links">
+        <li><a href="#about">about</a></li>
+        <li><a href="#stack">stack</a></li>
+        <li><a href="#projects">projects</a></li>
+        <li><a href="#activity">activity</a></li>
+    </ul>
+</nav>
+
+<section class="hero" id="about">
+<div class="container">
+    <div class="hero-inner">
+        <div class="avatar-3d">
+            <img src="{{AVATAR}}" alt="{{NAME}}" class="avatar-img">
+        </div>
+        <div class="hero-text">
+            <p class="term-line">whoami</p>
+            <h1 class="hero-name" data-text="{{NAME}}">{{NAME}}</h1>
+            <p class="handle">@{{USER}}<span class="cursor">_</span></p>
+            <p class="hero-bio">{{BIO}}</p>
+            <p class="hero-info">{{INFO}}</p>
+            <div class="btn-row">{{SOCIAL}}</div>
+            <div class="stats">
+                <div><div class="stat-v">{{REPOS_COUNT}}</div><div class="stat-l">repos</div></div>
+                <div><div class="stat-v">{{TOTAL_STARS}}</div><div class="stat-l">stars</div></div>
+                <div><div class="stat-v">{{FOLLOWERS}}</div><div class="stat-l">followers</div></div>
+                <div><div class="stat-v">{{FOLLOWING}}</div><div class="stat-l">following</div></div>
             </div>
         </div>
-    </section>
-    
-    <!-- Languages -->
-    <section class="section" id="stack">
-        <div class="container">
-            <div class="section-header">
-                <h2 class="section-title">tech stack</h2>
-                <div class="section-line"></div>
-            </div>
-            <p class="section-subtitle">// languages used across repositories</p>
-            
-            {lang_bar}
-            
-            <div class="lang-grid">
-                {lang_list}
-            </div>
-        </div>
-    </section>
-    
-    <!-- Repositories -->
-    <section class="section" id="projects">
-        <div class="container">
-            <div class="section-header">
-                <h2 class="section-title">projects</h2>
-                <div class="section-line"></div>
-            </div>
-            <p class="section-subtitle">// top repositories by stars</p>
-            
-            <div class="repo-grid">
-                {repo_cards}
-            </div>
-        </div>
-    </section>
-    
-    <!-- Activity -->
-    <section class="section" id="activity">
-        <div class="container">
-            <div class="section-header">
-                <h2 class="section-title">activity</h2>
-                <div class="section-line"></div>
-            </div>
-            <p class="section-subtitle">// recent public contributions</p>
-            
-            <div class="activity-list">
-                {activity_html}
-            </div>
-        </div>
-    </section>
-    
-    <!-- Footer -->
-    <footer class="footer">
-        <div class="container">
-            <p class="footer-text">
-                generated by <a href="https://github.com/Fatkhl/gh-portfolio-gen">gh-portfolio-gen</a>
-                // {data.get('generated_at', '')}
-            </p>
-        </div>
-    </footer>
-    
-    <script>
-        // ═══ Matrix Rain ═══
-        const canvas = document.getElementById('matrix');
-        const ctx = canvas.getContext('2d');
-        
-        function resizeCanvas() {{
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-        }}
-        resizeCanvas();
-        window.addEventListener('resize', resizeCanvas);
-        
-        const chars = 'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ<>{{}}[]|/\\';
-        const fontSize = 14;
-        const columns = Math.floor(canvas.width / fontSize);
-        const drops = Array(columns).fill(1);
-        
-        function drawMatrix() {{
-            ctx.fillStyle = 'rgba(10, 10, 10, 0.05)';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = '#00ff41';
-            ctx.font = fontSize + 'px JetBrains Mono';
-            
-            for (let i = 0; i < drops.length; i++) {{
-                const char = chars[Math.floor(Math.random() * chars.length)];
-                ctx.fillText(char, i * fontSize, drops[i] * fontSize);
-                
-                if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {{
-                    drops[i] = 0;
-                }}
-                drops[i]++;
-            }}
-        }}
-        setInterval(drawMatrix, 50);
-        
-        // ═══ Scroll Reveal ═══
-        const observer = new IntersectionObserver((entries) => {{
-            entries.forEach(entry => {{
-                if (entry.isIntersecting) {{
-                    entry.target.classList.add('visible');
-                }}
-            }});
-        }}, {{ threshold: 0.1 }});
-        
-        document.querySelectorAll('.repo-card, .activity-row, .lang-item, .section').forEach(el => {{
-            el.classList.add('reveal');
-            observer.observe(el);
-        }});
-        
-        // ═══ Typing Effect on Bio ═══
-        // (cursor blink is CSS-only, no JS needed for static text)
-        
-        // ═══ Nav active state ═══
-        const sections = document.querySelectorAll('section[id]');
-        window.addEventListener('scroll', () => {{
-            const scrollY = window.scrollY + 100;
-            sections.forEach(section => {{
-                const top = section.offsetTop;
-                const height = section.offsetHeight;
-                const id = section.getAttribute('id');
-                const link = document.querySelector(`.nav-links a[href="#${{id}}"]`);
-                if (link) {{
-                    if (scrollY >= top && scrollY < top + height) {{
-                        link.style.color = '#00ff41';
-                    }} else {{
-                        link.style.color = '';
-                    }}
-                }}
-            }});
-        }});
-    </script>
+    </div>
+</div>
+</section>
+
+<section class="section" id="stack">
+<div class="container">
+    <div class="sec-hdr"><h2 class="sec-title">tech stack</h2><div class="sec-line"></div></div>
+    <p class="sec-sub">// languages across repositories</p>
+    {{LANG_BAR}}
+    <div class="lang-grid">{{LANG_ITEMS}}</div>
+</div>
+</section>
+
+<section class="section" id="projects">
+<div class="container">
+    <div class="sec-hdr"><h2 class="sec-title">projects</h2><div class="sec-line"></div></div>
+    <p class="sec-sub">// top repositories by stars</p>
+    <div class="repo-grid">{{REPO_HTML}}</div>
+</div>
+</section>
+
+<section class="section" id="activity">
+<div class="container">
+    <div class="sec-hdr"><h2 class="sec-title">activity</h2><div class="sec-line"></div></div>
+    <p class="sec-sub">// recent public contributions</p>
+    <div class="activity-list">{{ACTIVITY}}</div>
+</div>
+</section>
+
+<footer class="footer">
+<div class="container">
+    <p class="footer-t">generated by <a href="https://github.com/Fatkhl/gh-portfolio-gen">gh-portfolio-gen</a> // {{GENERATED_AT}}</p>
+</div>
+</footer>
+</div>
+
+<script>
+// ═══ MATRIX RAIN ═══
+var mc = document.getElementById('matrix');
+var mctx = mc.getContext('2d');
+function mResize() { mc.width = innerWidth; mc.height = innerHeight; }
+mResize();
+addEventListener('resize', mResize);
+
+var mChars = '\u30A2\u30A4\u30A6\u30A8\u30AA\u30AB\u30AD\u30AF\u30B1\u30B301{}[]<>=/\\|;:@#$%^&*';
+var mFs = 13;
+var mDrops = [];
+for (var i = 0; i < Math.floor(innerWidth / mFs); i++) mDrops.push(Math.random() * -100);
+
+function matrixDraw() {
+    mctx.fillStyle = 'rgba(0,0,0,0.06)';
+    mctx.fillRect(0, 0, mc.width, mc.height);
+    mctx.font = mFs + 'px JetBrains Mono';
+    for (var i = 0; i < mDrops.length; i++) {
+        var ch = mChars[Math.floor(Math.random() * mChars.length)];
+        var br = Math.random();
+        if (br > 0.96) {
+            mctx.fillStyle = '#ffffff';
+            mctx.shadowColor = '#00ff41';
+            mctx.shadowBlur = 15;
+        } else {
+            mctx.fillStyle = 'rgba(0,255,65,' + (0.3 + Math.random() * 0.4) + ')';
+            mctx.shadowBlur = 0;
+        }
+        mctx.fillText(ch, i * mFs, mDrops[i] * mFs);
+        mctx.shadowBlur = 0;
+        if (mDrops[i] * mFs > mc.height && Math.random() > 0.975) mDrops[i] = 0;
+        mDrops[i]++;
+    }
+}
+setInterval(matrixDraw, 45);
+
+// ═══ RUNNING TERMINAL ═══
+var tCmds = [
+    {p:'~$', c:'nmap -sV 192.168.1.0/24', o:'Scanning 256 hosts...'},
+    {p:'~$', c:'ssh deploy@server-prod', o:'Connection established.'},
+    {p:'deploy@prod:~$', c:'docker compose up -d', o:'3 containers started'},
+    {p:'~$', c:'git push origin main', o:'Enumerating objects: 47, done.'},
+    {p:'~$', c:'python3 train.py --epochs 100', o:'Epoch 100/100 \u2014 loss: 0.0023'},
+    {p:'~$', c:'kubectl get pods --all-namespaces', o:'All pods running.'},
+    {p:'~$', c:'cargo build --release', o:'Compiling... finished in 12.3s'},
+    {p:'~$', c:'hermes chat -q "deploy to prod"', o:'Agent executing...'},
+    {p:'~$', c:'solana program deploy myapp.so', o:'Program deployed: 7xKX...9aBc'},
+    {p:'~$', c:'npx hardhat verify 0x1234...', o:'Contract verified \u2713'},
+    {p:'~$', c:'htop', o:'CPU: 23%  Mem: 4.2/8GB  Load: 1.24'},
+    {p:'~$', c:'tail -f /var/log/nginx/access.log', o:'200 GET /api/v1/users'},
+    {p:'~$', c:'forge test --gas-report', o:'32 tests passed, 0 failed'},
+    {p:'~$', c:'python3 bot.py --mode arbitrage', o:'3 opportunities found'},
+    {p:'~$', c:'npm run build && npm run deploy', o:'Deployed to Vercel.'},
+    {p:'~$', c:'sshuttle -r user@vps 10.0.0.0/8', o:'Tunneling traffic.'},
+    {p:'~$', c:'curl -s api.github.com/users/Fatkhl', o:'Fetching profile data...'},
+    {p:'~$', c:'docker ps --format "table"', o:'5 containers running'},
+    {p:'~$', c:'go build -o server ./cmd/api', o:'Build successful'},
+    {p:'~$', c:'cargo clippy -- -W clippy::all', o:'0 warnings, 0 errors'},
+];
+
+var tBox = document.getElementById('running-terminal');
+var tIdx = 0;
+
+function spawnTLine() {
+    var e = tCmds[tIdx % tCmds.length];
+    tIdx++;
+    var el = document.createElement('div');
+    el.className = 'tline';
+    var left = 3 + Math.random() * 85;
+    var dur = 18 + Math.random() * 22;
+    var delay = Math.random() * 2;
+    el.style.left = left + '%';
+    el.style.top = '100%';
+    el.style.animationDuration = dur + 's';
+    el.style.animationDelay = delay + 's';
+    el.style.fontSize = (9 + Math.random() * 3) + 'px';
+    el.innerHTML = '<span class="p">' + e.p + '</span> <span class="c">' + e.c + '</span><br><span class="o">' + e.o + '</span>';
+    tBox.appendChild(el);
+    setTimeout(function() { el.remove(); }, (dur + delay) * 1000);
+}
+
+setInterval(spawnTLine, 2200);
+for (var j = 0; j < 10; j++) setTimeout(spawnTLine, j * 350);
+
+// ═══ 3D CARD TILT ═══
+document.querySelectorAll('.repo-card').forEach(function(card) {
+    card.addEventListener('mousemove', function(e) {
+        var r = card.getBoundingClientRect();
+        var x = e.clientX - r.left;
+        var y = e.clientY - r.top;
+        var cx = r.width / 2;
+        var cy = r.height / 2;
+        var rx = ((y - cy) / cy) * -8;
+        var ry = ((x - cx) / cx) * 8;
+        card.style.setProperty('--rx', rx + 'deg');
+        card.style.setProperty('--ry', ry + 'deg');
+        card.style.setProperty('--mx', (x / r.width * 100) + '%');
+        card.style.setProperty('--my', (y / r.height * 100) + '%');
+        card.classList.add('tilted');
+    });
+    card.addEventListener('mouseleave', function() {
+        card.style.setProperty('--rx', '0deg');
+        card.style.setProperty('--ry', '0deg');
+        card.classList.remove('tilted');
+    });
+});
+
+// ═══ 3D AVATAR PARALLAX ═══
+var av = document.querySelector('.avatar-3d');
+if (av) {
+    document.addEventListener('mousemove', function(e) {
+        var cx = innerWidth / 2;
+        var cy = innerHeight / 2;
+        var rx = ((e.clientY - cy) / cy) * -6;
+        var ry = ((e.clientX - cx) / cx) * 10;
+        av.style.transform = 'rotateX(' + rx + 'deg) rotateY(' + ry + 'deg)';
+    });
+}
+
+// ═══ HERO 3D PARALLAX ═══
+var heroText = document.querySelector('.hero-text');
+if (heroText) {
+    document.addEventListener('mousemove', function(e) {
+        var cx = innerWidth / 2;
+        var cy = innerHeight / 2;
+        var mx = ((e.clientX - cx) / cx) * 3;
+        var my = ((e.clientY - cy) / cy) * 2;
+        heroText.style.transform = 'translateX(' + mx + 'px) translateY(' + my + 'px) translateZ(10px)';
+    });
+}
+
+// ═══ SCROLL REVEAL ═══
+var obs = new IntersectionObserver(function(entries) {
+    entries.forEach(function(e) { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.1 });
+document.querySelectorAll('.repo-card,.act-row,.lang-i,.section').forEach(function(el) {
+    el.classList.add('reveal');
+    obs.observe(el);
+});
+
+// ═══ NAV ACTIVE ═══
+var secs = document.querySelectorAll('section[id]');
+addEventListener('scroll', function() {
+    var y = scrollY + 100;
+    secs.forEach(function(s) {
+        var t = s.offsetTop, h = s.offsetHeight, id = s.id;
+        var link = document.querySelector('.nav-links a[href="#' + id + '"]');
+        if (link) link.style.color = (y >= t && y < t + h) ? '#00ff41' : '';
+    });
+});
+</script>
 </body>
 </html>'''
-        
-        return html
-    
-    def _split_bio(self, bio: str) -> list:
-        """Split bio into terminal-style lines."""
-        if not bio:
-            return [""]
-        # Split into max 2 lines
-        words = bio.split()
-        mid = len(words) // 2
-        line1 = " ".join(words[:mid])
-        line2 = " ".join(words[mid:])
-        return [line1, line2] if line2 else [bio]
-    
-    def _build_repo_cards(self, repos: list) -> str:
-        """Build repo cards HTML."""
+
+    def _repos(self, repos):
+        colors = {
+            "JavaScript":"#f1e05a","TypeScript":"#3178c6","Python":"#3572A5",
+            "Java":"#b07219","C++":"#f34b7d","Go":"#00ADD8","Rust":"#dea584",
+            "Ruby":"#701516","PHP":"#4F5D95","Shell":"#89e051","HTML":"#e34c26",
+            "CSS":"#563d7c","Solidity":"#AA6746","Dart":"#00B4AB","Vue":"#41b883",
+        }
         cards = []
-        lang_colors = {
-            "JavaScript": "#f1e05a", "TypeScript": "#3178c6", "Python": "#3572A5",
-            "Java": "#b07219", "C++": "#f34b7d", "Go": "#00ADD8", "Rust": "#dea584",
-            "Ruby": "#701516", "PHP": "#4F5D95", "Shell": "#89e051", "HTML": "#e34c26",
-            "CSS": "#563d7c", "Solidity": "#AA6746", "Dart": "#00B4AB",
-            "Vue": "#41b883", "Svelte": "#ff3e00",
-        }
-        
         for r in repos:
-            topics_html = ""
+            topics = ""
             if r.get("topics"):
-                tags = "".join(f'<span class="topic">{t}</span>' for t in r["topics"][:5])
-                topics_html = f'<div class="repo-topics">{tags}</div>'
-            
-            lang_color = lang_colors.get(r.get("language", ""), "#8b8b8b")
-            lang_html = ""
-            if r.get("language"):
-                lang_html = f'<span class="meta-item"><span class="lang-indicator" style="background:{lang_color};box-shadow:0 0 6px {lang_color}"></span>{r["language"]}</span>'
-            
-            stars_html = f'<span class="meta-item">★ {r["stars"]}</span>' if r.get("stars", 0) > 0 else ""
-            forks_html = f'<span class="meta-item">⑂ {r["forks"]}</span>' if r.get("forks", 0) > 0 else ""
-            
+                tags = "".join('<span class="topic">' + t + '</span>' for t in r["topics"][:5])
+                topics = '<div class="repo-topics">' + tags + '</div>'
+
+            lc = colors.get(r.get("language",""), "#8b8b8b")
+            lang = '<span class="meta-i"><span class="lang-ind" style="background:' + lc + ';box-shadow:0 0 6px ' + lc + '"></span>' + r["language"] + '</span>' if r.get("language") else ""
+            stars = '<span class="meta-i">\u2605 ' + str(r["stars"]) + '</span>' if r.get("stars", 0) > 0 else ""
+            forks = '<span class="meta-i">\u2442 ' + str(r["forks"]) + '</span>' if r.get("forks", 0) > 0 else ""
             desc = r.get("description", "") or "no description"
-            
-            cards.append(f'''
-                <a href="{r['url']}" target="_blank" class="repo-card">
-                    <div class="repo-name-row">
-                        <span class="repo-icon">◆</span>
-                        <span class="repo-name">{r['name']}</span>
-                    </div>
-                    {topics_html}
-                    <p class="repo-desc">{desc}</p>
-                    <div class="repo-meta">
-                        {lang_html}
-                        {stars_html}
-                        {forks_html}
-                    </div>
-                </a>''')
-        
-        return "\n".join(cards)
-    
-    def _build_language_bar(self, languages: list) -> str:
-        """Build language progress bar."""
-        if not languages:
-            return ""
-        
-        segments = []
-        for lang in languages[:8]:
-            segments.append(
-                f'<div class="lang-segment" style="width:{lang["percentage"]}%;background:{lang["color"]};box-shadow:0 0 8px {lang["color"]}40" title="{lang["name"]}: {lang["percentage"]}%"></div>'
+
+            cards.append(
+                '<a href="' + r['url'] + '" target="_blank" class="repo-card">'
+                '<div class="repo-name-row"><span class="repo-icon">\u25C6</span><span class="repo-name">' + r['name'] + '</span></div>'
+                + topics + '<p class="repo-desc">' + desc + '</p>'
+                '<div class="repo-meta">' + lang + stars + forks + '</div></a>'
             )
-        
-        return f'<div class="lang-bar">{"".join(segments)}</div>'
-    
-    def _build_language_list(self, languages: list) -> str:
-        """Build language list."""
+        return "\n".join(cards)
+
+    def _lang_bar(self, langs):
+        if not langs:
+            return ""
+        segs = []
+        for l in langs[:8]:
+            segs.append(
+                '<div class="lang-seg" style="width:' + str(l["percentage"]) + '%;background:' + l["color"] + ';box-shadow:0 0 8px ' + l["color"] + '30" title="' + l["name"] + ': ' + str(l["percentage"]) + '%"></div>'
+            )
+        return '<div class="lang-bar">' + "".join(segs) + '</div>'
+
+    def _lang_list(self, langs):
         items = []
-        for lang in languages[:12]:
-            items.append(f'''
-                <div class="lang-item">
-                    <span class="lang-dot" style="background:{lang['color']};color:{lang['color']}"></span>
-                    <span class="lang-name">{lang['name']}</span>
-                    <span class="lang-pct">{lang['percentage']}%</span>
-                </div>''')
-        
+        for l in langs[:12]:
+            items.append(
+                '<div class="lang-i"><span class="lang-dot" style="background:' + l["color"] + ';box-shadow:0 0 6px ' + l["color"] + '50"></span>'
+                '<span class="lang-n">' + l["name"] + '</span>'
+                '<span class="lang-p">' + str(l["percentage"]) + '%</span></div>'
+            )
         return "\n".join(items)
-    
-    def _build_activity(self, activities: list) -> str:
-        """Build activity list."""
-        if not activities:
+
+    def _activity(self, acts):
+        if not acts:
             return '<p style="color:var(--text-dim)">// no recent public activity</p>'
-        
-        icons = {
-            "Push": "→", "Create": "+", "Delete": "×", "Fork": "⑂",
-            "Issues": "!", "PullRequest": "⇐", "Watch": "★", "Release": "📦",
-            "Public": "⊙", "Member": "☺", "Gollum": "✎",
-        }
-        
+        icons = {"Push":"\u2192","Create":"+","Delete":"\u00D7","Fork":"\u2442","Issues":"!","PullRequest":"\u21D0","Watch":"\u2605","Release":"\U0001F4E6","Public":"\u2299","Member":"\u263A","Gollum":"\u270E"}
         items = []
-        for a in activities:
-            event_type = a.get("type", "Event")
-            icon = icons.get(event_type, "•")
-            repo = a.get("repo", "")
-            date = a.get("date", "")
-            
-            items.append(f'''
-                <div class="activity-row">
-                    <div class="activity-icon">{icon}</div>
-                    <span class="activity-type">{event_type}</span>
-                    <span class="activity-repo">{repo}</span>
-                    <span class="activity-date">{date}</span>
-                </div>''')
-        
+        for a in acts:
+            t = a.get("type", "Event")
+            i = icons.get(t, "\u2022")
+            items.append(
+                '<div class="act-row"><div class="act-icon">' + i + '</div>'
+                '<span class="act-type">' + t + '</span>'
+                '<span class="act-repo">' + a.get("repo", "") + '</span>'
+                '<span class="act-date">' + a.get("date", "") + '</span></div>'
+            )
         return "\n".join(items)
